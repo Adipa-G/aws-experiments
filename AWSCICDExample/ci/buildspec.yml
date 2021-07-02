@@ -1,0 +1,25 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      dotnet: 3.1
+    commands:
+      - dotnet tool install -g dotnet-format
+      - export PATH="$PATH:/root/.dotnet/tools"
+
+  pre_build:
+    commands:
+      - echo $BUILD_OUTPUT_BUCKET
+      - echo $CODEBUILD_BUILD_ID
+      - echo $CODEBUILD_SOURCE_VERSION
+      - echo $AWS_REGION
+
+      - apt-get upgrade
+      - apt-get update
+
+  build:
+    commands:
+
+      - dotnet format ./AWSCICDExample/api/api.sln --check
+      - dotnet build ./AWSCICDExample/api/api.sln
+      - dotnet test /AWSCICDExample/api/api.sln

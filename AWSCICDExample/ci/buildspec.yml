@@ -22,4 +22,4 @@ phases:
 
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test /AWSCICDExample/api/api.sln
+      - dotnet test ./AWSCICDExample/api/api.sln

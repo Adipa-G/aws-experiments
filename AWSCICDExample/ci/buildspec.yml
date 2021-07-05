@@ -28,4 +28,4 @@ reports:
   jacoco-report:
     files:
       - './AWSCICDExample/api/test/HealthAPI.Tests/TestResults/**/*.xml'
-    file-format: 'JACOCOXML'
+    file-format: 'COBERTURAXML'

@@ -21,7 +21,7 @@ phases:
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test ./AWSCICDExample/api/api.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput ./testresults
+      - dotnet test ./AWSCICDExample/api/test/HealthAPI/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput ./testresults
       - dotnet publish -c release -o ./build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:

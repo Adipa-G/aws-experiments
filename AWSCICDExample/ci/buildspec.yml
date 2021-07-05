@@ -21,11 +21,11 @@ phases:
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput=./testresults
+      - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
       - dotnet publish -c release -o ./build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:
   jacoco-report:
     files:
-      - './test-results/*.xml'
+      - './AWSCICDExample/api/test/HealthAPI.Tests/TestResults/**/*.xml'
     file-format: 'JACOCOXML'

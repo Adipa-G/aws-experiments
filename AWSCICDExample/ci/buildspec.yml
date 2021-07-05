@@ -19,6 +19,6 @@ phases:
     commands:
 
       - dotnet format ./AWSCICDExample/api/api.sln --check
-      - dotnet restore
+      - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/api.sln

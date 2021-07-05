@@ -21,4 +21,11 @@ phases:
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test ./AWSCICDExample/api/api.sln
+      - dotnet test ./AWSCICDExample/api/api.sln --logger trx --results-directory ./testresults
+      
+  reports:
+    AWSCICDExample:
+      file-format: VisualStudioTrx
+      files:
+        - '**/*'
+      base-directory: './testresults'

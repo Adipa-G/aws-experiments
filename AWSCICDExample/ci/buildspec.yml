@@ -21,11 +21,11 @@ phases:
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test ./AWSCICDExample/api/api.sln --logger trx --results-directory ./testresults
+      - dotnet test ./AWSCICDExample/api/api.sln --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura /p:CoverletOutput ./testresults
+      - dotnet publish -c release -o ./build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:
-  AWSCICDExample:
-    file-format: VisualStudioTrx
+  jacoco-report:
     files:
-      - '**/*'
-    base-directory: './testresults'
+      - './test-results/*.xml'
+    file-format: 'JACOCOXML'

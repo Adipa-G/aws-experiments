@@ -1,0 +1,31 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      dotnet: 3.1
+    commands:
+      - dotnet tool install -g dotnet-format
+      - export PATH="$PATH:/root/.dotnet/tools"
+
+  pre_build:
+    commands:
+      - echo $CODEBUILD_BUILD_ID
+      - echo $AWS_REGION
+
+      - apt-get upgrade
+      - apt-get update
+
+  build:
+    commands:
+
+      - dotnet format ./AWSCICDExample/api/api.sln --check
+      - dotnet restore ./AWSCICDExample/api/api.sln
+      - dotnet build ./AWSCICDExample/api/api.sln
+      - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
+      - dotnet publish -c release -o ./build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
+      
+reports:
+  jacoco-report:
+    files:
+      - './AWSCICDExample/api/test/HealthAPI.Tests/TestResults/**/*.xml'
+    file-format: 'COBERTURAXML'

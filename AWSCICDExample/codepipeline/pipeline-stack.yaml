@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This stack is used to provision the pipeline that provision the CI/CD pipeline for simple API
+Parameters:
+  ProjectName:
+    Type: String
+    Default: test-api
+    Description: Name for the project (only lower case letters with '-')
+    
+Resources:
+  PipelineKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'Key for ${ProjectName}'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName 
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: !Sub 'provision.${ProjectName}.key-policy'
+        Statement:
+          - Sid: Allow IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: kms:*
+            Resource: '*'
+         
+  PipelineKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/provision-${ProjectName}-kms-key'
+      TargetKeyId: !Ref PipelineKey
+      
+  PipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'provision.${ProjectName}.s3'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !GetAtt PipelineKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+        - Id: Purge after 2 days of creation
+          ExpirationInDays: 2
+          Status: Enabled
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+          
+  PipelineBucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref PipelineBucket
+      PolicyDocument: 
+        Statement: 
+          - Sid: CodeBuildServicePermit
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: CodePipelineServicePermit
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: AllowAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: 
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: AllowAccountAccessObjects
+            Effect: Allow
+            Principal:
+              AWS: 
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3/*'
+  
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+                - cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: sts:AssumeRole
+      RoleName: !Sub 'deploy.${ProjectName}.role'
+      Policies:
+        - PolicyName: Allow-Application-Infrastructure-Provisioning
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:*
+                Resource: '*'
+              - Effect: Allow
+                Action: cloudwatch:*
+                Resource: '*'
+              - Effect: Allow
+                Action: dynamodb:*
+                Resource: '*'
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+              - Effect: Allow
+                Action: codedeploy:*
+                Resource: '*'
+              - Effect: Allow
+                Action: xray:*
+                Resource: '*'
+              - Effect: Allow
+                Action: apigateway:*
+                Resource: '*'
+              - Effect: Allow
+                Action: iam:*
+                Resource: '*'
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource: '*'
+              - Effect: Allow
+                Action: kms:*
+                Resource: '*'
+        - PolicyName: KMS-Key-Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Effect: Allow
+              Action: 
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !GetAtt PipelineKey.Arn
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+  
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+                - codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      RoleName: !Sub 'pipeline.${ProjectName}.role'
+      Policies:
+        - PolicyName: KMS-Key-Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Effect: Allow
+              Action: 
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !GetAtt PipelineKey.Arn
+        - PolicyName: BucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+                Action: 's3:*'
+              - Effect: Allow
+                Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3/*'
+                Action: 's3:*'
+        - PolicyName: AssumeDeployRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'sts:AssumeRole'
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+          
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${ProjectName}.build'
+      Description: Builds the code and package the cloudformation templates
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment: 
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+          - Name: BUILD_OUTPUT_BUCKET
+            Value: !Sub ${BucketPrefix}-artefactbucket
+          - Name: AWS_REGION
+            Value: !Sub ${AWS::Region}
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Source: 
+        Type: CODEPIPELINE
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+  
+  Pipeline:
+      Type: AWS::CodePipeline::Pipeline
+      Properties:
+        Tags:
+          - Key: Project
+            Value: !Ref ProjectName
+        ArtifactStore: 
+            Location: !Sub provision.${ProjectName}.s3
+            Type: S3
+            EncryptionKey:
+              Id: !GetAtt PipelineKey.Arn
+              Type: KMS
+        Name: !Sub provision.${ProjectName}.pipeline
+        RoleArn: !GetAtt PipelineRole.Arn
+        Stages:
+            - Name: Source
+              Actions:
+                - Name: GitHubRepo
+                  ActionTypeId:
+                    Category: Source
+                    Owner: ThirdParty
+                    Provider: GitHub
+                    Version: '1'
+                  Configuration:
+                    Owner: Adipa-G
+                    Repo: aws-experiments
+                    Branch: master
+                    OAuthToken:  "{{resolve:secretsmanager:github-pat-token:SecretString:token}}"
+                  OutputArtifacts:
+                    - Name: SourceArtefact
+                  RunOrder: 1
+            - Name: Build
+              Actions:
+                - Name: CodeBuild
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Provider: CodeBuild
+                    Version: '1'
+                 Configuration:
+                    ProjectName: !Ref CodeBuildProject
+                  InputArtifacts:
+                    - Name: SourceArtefact
+                  OutputArtifacts:
+                    - Name: OutputArtefact
+                  RunOrder: 1
+            - Name: Deploy
+              Actions:
+                - Name: CreateChangeSet
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_REPLACE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-stack'
+                    ChangeSetName: !Sub '${ProjectName}-change-set'
+                    TemplatePath: SourceArtefact::AWSCICDExample/template/template.yaml
+                    Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                    ParameterOverrides: !Sub |
+                      {
+                        "ProjectName" : "${ProjectName}"
+                      }
+                  InputArtifacts:
+                    - Name: SourceArtefact
+                  RunOrder: 1
+                - Name: ExecuteChangeSet
+                  Namespace: APIDeploy
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_EXECUTE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-stack'
+                    ChangeSetName: !Sub '${ProjectName}-change-set'
+                  OutputArtifacts:
+                    - Name: !Sub '${ProjectName}ChangeSet'
+                  RunOrder: 2

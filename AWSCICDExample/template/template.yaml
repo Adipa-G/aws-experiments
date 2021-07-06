@@ -3,7 +3,7 @@ Description: This stack is used to provision the pipeline that provision the CI/
 Parameters:
   ProjectName:
     Type: String
-    Default: test-api
+    Default: test-api-one
     Description: Name for the project (lower case)
     
 Resources:

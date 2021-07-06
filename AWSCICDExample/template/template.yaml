@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This stack is used to provision the pipeline that provision the CI/CD pipeline for simple API
+Parameters:
+  ProjectName:
+    Type: String
+    Default: test-api
+    Description: Name for the project (lower case)
+    
+Resources:
+  PipelineKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'Key for ${ProjectName}'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName 
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: !Sub 'provision.${ProjectName}.key-policy'
+        Statement:
+          - Sid: Allow IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: kms:*
+            Resource: '*'

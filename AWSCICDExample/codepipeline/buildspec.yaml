@@ -23,7 +23,7 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet lambda package -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
+      - dotnet lambda package -c release -o $CODEBUILD_SRC_DIR/AWSCICDExample/build_output.zip -pl $CODEBUILD_SRC_DIR/AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:
   jacoco-report:
@@ -33,5 +33,5 @@ reports:
 
 artifacts:    
   files:
-    - ./AWSCICDExample/build_output.zip
+    - ./AWSCICDExample/build_output
     - ./AWSCICDExample/cloudformationtemplates/**/*

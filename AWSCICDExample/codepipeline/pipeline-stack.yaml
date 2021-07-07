@@ -317,8 +317,7 @@ Resources:
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       {
-                        "ProjectName" : "${ProjectName}",
-                        "CodeUri" : OutputArtefact::AWSCICDExample/build_output.zip
+                        "ProjectName" : "${ProjectName}"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

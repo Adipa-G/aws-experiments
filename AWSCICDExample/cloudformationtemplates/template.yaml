@@ -5,10 +5,6 @@ Parameters:
     Type: String
     Default: not-set
     Description: Name for the project (lower case)
-  CodeUri:
-    Type: String
-    Default: not-set
-    Description: Url for the lamda function code
   
 Transform: AWS::Serverless-2016-10-31
 Resources:
@@ -80,7 +76,7 @@ Resources:
       Runtime: dotnetcore3.1
       MemorySize: 2048
       Timeout: 30
-      CodeUri: !Ref CodeUri    
+      CodeUri: ""
       Environment:
         Variables:
           env: Prod

@@ -29,3 +29,6 @@ reports:
     files:
       - './AWSCICDExample/api/test/HealthAPI.Tests/TestResults/**/*.xml'
     file-format: 'COBERTURAXML'
+    
+files:
+    - ./build_output/**/*

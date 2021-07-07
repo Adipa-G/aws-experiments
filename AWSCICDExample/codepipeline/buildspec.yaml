@@ -23,8 +23,8 @@ phases:
       - dotnet format ./AWSCICDExample/api/api.sln --check
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
-      - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet lambda package-ci -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI -t ./AWSCICDExample/cloudformationtemplates/template.yaml -sb $BUILD_OUTPUT_BUCKET -sp lamda/$CODEBUILD_BUILD_ID  -ot ./AWSCICDExample/cloudformationtemplates/output_template.yaml
+      - dotnet test $CODEBUILD_SRC_DIR/AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
+      - dotnet lambda package-ci -c release -o $CODEBUILD_SRC_DIR/AWSCICDExample/build_output.zip -pl $CODEBUILD_SRC_DIR/AWSCICDExample/api/src/HealthAPI -t $CODEBUILD_SRC_DIR/AWSCICDExample/cloudformationtemplates/template.yaml -sb $BUILD_OUTPUT_BUCKET -sp lamda/$CODEBUILD_BUILD_ID  -ot $CODEBUILD_SRC_DIR/AWSCICDExample/cloudformationtemplates/output_template.yaml
       
 reports:
   jacoco-report:

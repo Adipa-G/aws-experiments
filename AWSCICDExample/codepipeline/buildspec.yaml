@@ -22,13 +22,15 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet publish -c release -o ./build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
+      - dotnet publish -c release -o ./AWSCICDExample/build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:
   jacoco-report:
     files:
       - './AWSCICDExample/api/test/HealthAPI.Tests/TestResults/**/*.xml'
     file-format: 'COBERTURAXML'
-    
-files:
-    - ./build_output/**/*
+
+artifacts:    
+  files:
+    - ./AWSCICDExample/build_output/**/*
+    - ./AWSCICDExample/template/**/*

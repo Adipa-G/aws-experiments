@@ -24,7 +24,7 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet lambda package -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI -t ./AWSCICDExample/cloudformationtemplates/template.yaml -sb $BUILD_OUTPUT_BUCKET -sp lamda/$CODEBUILD_BUILD_ID  -ot ./AWSCICDExample/cloudformationtemplates/output_template.yaml
+      - dotnet lambda package-ci -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI -t ./AWSCICDExample/cloudformationtemplates/template.yaml -sb $BUILD_OUTPUT_BUCKET -sp lamda/$CODEBUILD_BUILD_ID  -ot ./AWSCICDExample/cloudformationtemplates/output_template.yaml
       
 reports:
   jacoco-report:

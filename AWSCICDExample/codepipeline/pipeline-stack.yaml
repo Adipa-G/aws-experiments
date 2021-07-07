@@ -243,8 +243,6 @@ Resources:
             Value: !Sub provision.${ProjectName}.s3
           - Name: AWS_REGION
             Value: !Sub ${AWS::Region}
-          - Name: COMMIT_ID
-            Value: !Sub #{SourceVariables.CommitId}
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
         Type: CODEPIPELINE
@@ -275,7 +273,6 @@ Resources:
             - Name: Source
               Actions:
                 - Name: GitHubRepo
-                  Namespace: SourceVariables
                   ActionTypeId:
                     Category: Source
                     Owner: ThirdParty
@@ -292,6 +289,7 @@ Resources:
             - Name: Build
               Actions:
                 - Name: CodeBuild
+                  Namespace: BuildVariables
                   ActionTypeId:
                     Category: Build
                     Owner: AWS
@@ -323,7 +321,7 @@ Resources:
                     ParameterOverrides: !Sub |
                       {
                         "ProjectName" : "${ProjectName}"
-                        "CodeUri" : "s3://provision.${ProjectName}.s3/lambda/build_#{SourceVariables.CommitId}.zip"
+                        "CodeUri" : "s3://provision.${ProjectName}.s3/lambda/build_#{BuildVariables.BuildId}.zip"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

@@ -10,11 +10,11 @@ phases:
 
   pre_build:
     commands:
-      - echo ${COMMIT_ID}
       - echo ${AWS_REGION}
-      - echo ${CODEBUILD_SRC_DIR}
       - echo ${BUILD_OUTPUT_BUCKET}
-
+      - echo ${CODEBUILD_BUILD_NUMBER}
+      - echo ${CODEBUILD_SRC_DIR}
+      
       - apt-get upgrade
       - apt-get update
 
@@ -26,7 +26,7 @@ phases:
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
       - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/AWSCICDExample/api/src/HealthAPI -o ${CODEBUILD_SRC_DIR}/AWSCICDExample/lambda_build_output.zip
-      - aws s3 cp ./AWSCICDExample/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${COMMIT_ID}.zip 
+      - aws s3 cp ./AWSCICDExample/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.zip 
       
 reports:
   jacoco-report:

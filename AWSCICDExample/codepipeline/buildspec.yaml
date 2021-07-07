@@ -13,6 +13,7 @@ phases:
       - echo $CODEBUILD_BUILD_ID
       - echo $AWS_REGION
       - echo $CODEBUILD_SRC_DIR
+      - echo $BUILD_OUTPUT_BUCKET 
 
       - apt-get upgrade
       - apt-get update
@@ -24,11 +25,8 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet lambda package >
-          --configuration release 
-          -o $CODEBUILD_SRC_DIR/AWSCICDExample/lambda_build_$CODEBUILD_BUILD_ID_output.zip
-          --project-location $CODEBUILD_SRC_DIR/AWSCICDExample/api/src/HealthAPI 
-      - aws s3 cp $CODEBUILD_SRC_DIR/AWSCICDExample/lambda_build_$CODEBUILD_BUILD_ID_output.zip $BUILD_OUTPUT_BUCKET 
+      - dotnet lambda package -c release -pl $CODEBUILD_SRC_DIR/AWSCICDExample/api/src/HealthAPI -o $CODEBUILD_SRC_DIR/AWSCICDExample/lambda_build_output.zip
+      - aws s3 cp ./AWSCICDExample/lambda_build_output.zip $BUILD_OUTPUT_BUCKET 
       
 reports:
   jacoco-report:

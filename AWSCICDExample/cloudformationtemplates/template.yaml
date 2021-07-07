@@ -1,27 +1,113 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This stack is used to provision the pipeline that provision the CI/CD pipeline for simple API
+Description: A Lamda function to run the app
 Parameters:
   ProjectName:
     Type: String
-    Default: test-api-one
+    Default: not-set
     Description: Name for the project (lower case)
-    
+  CodeUri:
+    Type: String
+    Default: not-set
+    Description: Url for the lamda function code
+  
+Transform: AWS::Serverless-2016-10-31
 Resources:
-  PipelineKey:
-    Type: AWS::KMS::Key
+  AspNetCoreFunctionRole:
+    Type: AWS::IAM::Role
     Properties:
-      Description: !Sub 'Key for ${ProjectName}'
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service: lambda.amazonaws.com
       Tags:
         - Key: Project
-          Value: !Ref ProjectName 
-      KeyPolicy:
+          Value: !Ref ProjectName          
+     
+  
+  FunctionCloudWatchPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CovidAPIFunctionCloudWatchPolicy
+      Roles:
+       - !Ref AspNetCoreFunctionRole
+      PolicyDocument:
         Version: '2012-10-17'
-        Id: !Sub 'provision.${ProjectName}.key-policy'
         Statement:
-          - Sid: Allow IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: kms:*
-            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+      
+  FunctionXRayPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AspNetCoreFunctionRole
+      PolicyName: CovidAPIFunctionXRayPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Action:
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+          Effect: Allow
+          Resource: "*"
+
+  ApiErrorMetricGreaterThanZeroAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmDescription: Lambda Function Error > 0
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: ApiName
+          Value: !Ref AWS::StackName
+      EvaluationPeriods: 1
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+
+  AspNetCoreFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      Handler: HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnetcore3.1
+      MemorySize: 2048
+      Timeout: 30
+      CodeUri: !Ref CodeUri    
+      Environment:
+        Variables:
+          env: Prod
+      Tracing: Active
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: AllAtOnce
+        Alarms:
+          - !Ref ApiErrorMetricGreaterThanZeroAlarm
+      Role: 
+        !GetAtt 
+          - AspNetCoreFunctionRole
+          - Arn
+      Events:
+        ProxyResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        RootResource:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+      
+Outputs:
+  ApiURL:
+    Description: API endpoint URL for Prod environment
+    Value:
+      Fn::Sub: https://replace-url.execute-api.${AWS::Region}.amazonaws.com/Prod

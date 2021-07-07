@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    BUILD_ID: ""
+    BUILD_ID: ${CODEBUILD_BUILD_NUMBER}
     
   exported-variables:
     - BUILD_ID
@@ -35,7 +35,6 @@ phases:
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
       - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/AWSCICDExample/api/src/HealthAPI -o ${CODEBUILD_SRC_DIR}/AWSCICDExample/lambda_build_output.zip
       - aws s3 cp ./AWSCICDExample/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.zip
-      - set BUILD_ID ${CODEBUILD_BUILD_NUMBER}
       
 reports:
   jacoco-report:

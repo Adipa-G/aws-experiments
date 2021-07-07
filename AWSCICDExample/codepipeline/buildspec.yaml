@@ -12,6 +12,7 @@ phases:
     commands:
       - echo $CODEBUILD_BUILD_ID
       - echo $AWS_REGION
+      - echo $CODEBUILD_SRC_DIR
 
       - apt-get upgrade
       - apt-get update
@@ -33,5 +34,5 @@ reports:
 
 artifacts:    
   files:
-    - ./AWSCICDExample/build_output
+    - ./AWSCICDExample/build_output.zip
     - ./AWSCICDExample/cloudformationtemplates/**/*

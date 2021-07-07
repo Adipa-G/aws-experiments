@@ -24,7 +24,6 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - cd ./AWSCICDExample/api/src/HealthAPI
       - dotnet lambda package -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI
       
 reports:

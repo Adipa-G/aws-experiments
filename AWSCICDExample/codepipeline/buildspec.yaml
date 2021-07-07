@@ -5,6 +5,7 @@ phases:
       dotnet: 3.1
     commands:
       - dotnet tool install -g dotnet-format
+      - dotnet tool install -g Amazon.Lambda.Tools
       - export PATH="$PATH:/root/.dotnet/tools"
 
   pre_build:
@@ -22,7 +23,7 @@ phases:
       - dotnet restore ./AWSCICDExample/api/api.sln
       - dotnet build ./AWSCICDExample/api/api.sln
       - dotnet test ./AWSCICDExample/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet publish -c release -o ./AWSCICDExample/build_output ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
+      - dotnet lambda package -c release -o ./AWSCICDExample/build_output.zip -pl ./AWSCICDExample/api/src/HealthAPI/HealthAPI.csproj
       
 reports:
   jacoco-report:
@@ -32,5 +33,5 @@ reports:
 
 artifacts:    
   files:
-    - ./AWSCICDExample/build_output/**/*
+    - ./AWSCICDExample/build_output.zip
     - ./AWSCICDExample/cloudformationtemplates/**/*

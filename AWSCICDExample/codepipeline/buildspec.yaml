@@ -1,11 +1,8 @@
 version: 0.2
 
 env:
-  variables:
-    BUILD_ID: ${CODEBUILD_BUILD_NUMBER}
-    
   exported-variables:
-    - BUILD_ID
+    - CODEBUILD_BUILD_NUMBER
 
 phases:
   install:

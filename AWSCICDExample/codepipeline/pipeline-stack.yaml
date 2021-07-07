@@ -313,14 +313,14 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set'
-                    TemplatePath: SourceArtefact::AWSCICDExample/template/template.yaml
+                    TemplatePath: OutputArtefact::AWSCICDExample/cloudformationtemplates/template.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       {
                         "ProjectName" : "${ProjectName}"
                       }
                   InputArtifacts:
-                    - Name: SourceArtefact
+                    - Name: OutputArtefact
                   RunOrder: 1
                 - Name: ExecuteChangeSet
                   Namespace: APIDeploy

@@ -33,4 +33,4 @@ reports:
 artifacts:    
   files:
     - ./AWSCICDExample/build_output/**/*
-    - ./AWSCICDExample/template/**/*
+    - ./AWSCICDExample/cloudformationtemplates/**/*

@@ -239,6 +239,8 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
+          - Name: BUILD_OUTPUT_BUCKET
+            Value: !Sub provision.${ProjectName}.s3
           - Name: AWS_REGION
             Value: !Sub ${AWS::Region}
       ServiceRole: !GetAtt PipelineRole.Arn

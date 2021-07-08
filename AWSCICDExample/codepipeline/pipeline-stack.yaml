@@ -318,9 +318,9 @@ Resources:
                     ChangeSetName: !Sub '${ProjectName}-change-set'
                     TemplatePath: OutputArtefact::AWSCICDExample/cloudformationtemplates/output_template.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
-                    ParameterOverrides: !Sub |
+                    ParameterOverrides: |
                       {
-                        "ProjectName": "${ProjectName}",
+                        "ProjectName": !Sub "${ProjectName}",
                         "CodeUri": { "Fn::GetParam": ["OutputArtefact", "build.json", "BinaryBucketUrl"] }
                       }
                   InputArtifacts:

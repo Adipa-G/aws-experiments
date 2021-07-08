@@ -322,7 +322,7 @@ Resources:
                       {
                         "ProjectName": "${ProjectName}",
                         "CodeUri": { "Fn::GetParam": ["OutputArtefact", "build.json", "BinaryBucketUrl"] }
-                      }                      {
+                      }
                   InputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1

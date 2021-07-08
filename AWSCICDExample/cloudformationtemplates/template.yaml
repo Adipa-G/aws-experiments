@@ -5,10 +5,14 @@ Parameters:
     Type: String
     Default: not-set
     Description: Name for the project (lower case)
-  CodeUri:
+  BucketName:
     Type: String
     Default: not-set
-    Description: The URL of the lamda package
+    Description: S3 bucket name where the lambda function package lives
+  BucketKey:
+    Type: String
+    Default: not-set
+    Description: S3 bucket key of the lambda function package
   
 Transform: AWS::Serverless-2016-10-31
 Resources:
@@ -80,7 +84,9 @@ Resources:
       Runtime: dotnetcore3.1
       MemorySize: 2048
       Timeout: 30
-      CodeUri: !Ref CodeUri
+      CodeUri:
+        Bucket: !Sub "${BucketName}"
+        Key: !Sub "${BucketKey}"
       Environment:
         Variables:
           env: Prod

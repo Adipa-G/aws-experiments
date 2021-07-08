@@ -321,7 +321,8 @@ Resources:
                     ParameterOverrides: !Sub |
                       { 
                         "ProjectName" : "${ProjectName}",
-                        "CodeUri" : "s3://provision.${ProjectName}.s3/lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
+                        "BucketName" : "provision.${ProjectName}.s3",
+                        "BucketKey" : "lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

@@ -33,29 +33,26 @@ Resources:
   LambdaRestApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
-      Name: lambda-api
-      Body:
-        info:
-          version: '1.0'
-          title: !Ref 'AWS::StackName'
-        paths:
-          '/{proxy+}':
-            x-amazon-apigateway-any-method:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri: !Sub >-
-                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
-              responses: {}
-          /:
-            x-amazon-apigateway-any-method:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri: !Sub >-
-                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
-              responses: {}
-        swagger: '2.0'
+      Name: lambda-api        
+  
+  LambdaRestApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt LambdaRestApi.RootResourceId
+      PathPart: '{proxy+}'
+      RestApiId: !Ref LambdaRestApi
+      
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId: !Ref LambdaRestApiResource
+      RestApiId: !Ref LambdaRestApi
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations'
   
   AspNetCoreFunctionRole:
     Type: AWS::IAM::Role
@@ -104,7 +101,7 @@ Resources:
   FunctionCloudWatchPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
-      PolicyName: CovidAPIFunctionCloudWatchPolicy
+      PolicyName: AspNetCoreFunctionCloudWatchPolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -120,7 +117,7 @@ Resources:
   FunctionXRayPolicy:
     Type: 'AWS::IAM::Policy'
     Properties:
-      PolicyName: CovidAPIFunctionXRayPolicy
+      PolicyName: AspNetCoreFunctionXRayPolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:

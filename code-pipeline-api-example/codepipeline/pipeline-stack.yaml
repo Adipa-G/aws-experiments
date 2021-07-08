@@ -246,7 +246,7 @@ Resources:
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
         Type: CODEPIPELINE
-        BuildSpec: AWSCICDExample/codepipeline/buildspec.yaml
+        BuildSpec: code-pipeline-api-example/codepipeline/buildspec.yaml
       Tags:
         - Key: Project
           Value: !Ref ProjectName
@@ -316,7 +316,7 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
-                    TemplatePath: OutputArtefact::AWSCICDExample/cloudformationtemplates/template.yaml
+                    TemplatePath: OutputArtefact::code-pipeline-api-example/cloudformationtemplates/template.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       { 

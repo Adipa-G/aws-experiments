@@ -16,6 +16,47 @@ Parameters:
   
 Transform: AWS::Serverless-2016-10-31
 Resources:
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref LambdaRestApi
+      Description: 'RestApi deployment'
+      StageName: Stage
+  
+  ApiProdStage:
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref LambdaRestApi
+      StageName: Prod
+  
+  LambdaRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: lambda-api
+      Body:
+        info:
+          version: '1.0'
+          title: !Ref 'AWS::StackName'
+        paths:
+          '/{proxy+}':
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+          /:
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+        swagger: '2.0'
+  
   AspNetCoreFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -28,92 +69,71 @@ Resources:
               Service: lambda.amazonaws.com
       Tags:
         - Key: Project
-          Value: !Ref ProjectName          
-     
+          Value: !Ref ProjectName 
   
+  AspNetCoreFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      TracingConfig:
+        Mode: Active
+      Code:
+        S3Bucket: !Sub '${BucketName}'
+        S3Key: !Sub '${BucketKey}'
+      Tags:
+        - Value: SAM
+          Key: 'lambda:createdBy'
+      MemorySize: 2048
+      Environment:
+        Variables:
+          env: Prod
+      Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
+      Role: !GetAtt 
+        - AspNetCoreFunctionRole
+        - Arn
+      Timeout: 30
+      Runtime: dotnetcore3.1
+      
+  ApiProxyResourcePermissionProd:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref AspNetCoreFunction
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LambdaRestApi}/*/*/*
+      
   FunctionCloudWatchPolicy:
-    Type: AWS::IAM::Policy
+    Type: 'AWS::IAM::Policy'
     Properties:
       PolicyName: CovidAPIFunctionCloudWatchPolicy
-      Roles:
-       - !Ref AspNetCoreFunctionRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: 2012-10-17
         Statement:
-          - Effect: Allow
-            Action:
+          - Action:
               - 'logs:CreateLogGroup'
               - 'logs:CreateLogStream'
               - 'logs:PutLogEvents'
             Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
-      
-  FunctionXRayPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
+            Effect: Allow
       Roles:
         - !Ref AspNetCoreFunctionRole
+          
+  FunctionXRayPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
       PolicyName: CovidAPIFunctionXRayPolicy
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: 2012-10-17
         Statement:
-        - Action:
-          - xray:PutTelemetryRecords
-          - xray:PutTraceSegments
-          Effect: Allow
-          Resource: "*"
-
-  ApiErrorMetricGreaterThanZeroAlarm:
-    Type: "AWS::CloudWatch::Alarm"
-    Properties:
-      AlarmDescription: Lambda Function Error > 0
-      ComparisonOperator: GreaterThanThreshold
-      Dimensions:
-        - Name: ApiName
-          Value: !Ref AWS::StackName
-      EvaluationPeriods: 1
-      MetricName: 5XXError
-      Namespace: AWS/ApiGateway
-      Period: 60
-      Statistic: Sum
-      Threshold: 0
-
-  AspNetCoreFunction:
-    Type: "AWS::Serverless::Function"
-    Properties:
-      Handler: HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync
-      Runtime: dotnetcore3.1
-      MemorySize: 2048
-      Timeout: 30
-      CodeUri:
-        Bucket: !Sub "${BucketName}"
-        Key: !Sub "${BucketKey}"
-      Environment:
-        Variables:
-          env: Prod
-      Tracing: Active
-      AutoPublishAlias: live
-      DeploymentPreference:
-        Type: AllAtOnce
-        Alarms:
-          - !Ref ApiErrorMetricGreaterThanZeroAlarm
-      Role: 
-        !GetAtt 
-          - AspNetCoreFunctionRole
-          - Arn
-      Events:
-        ProxyResource:
-          Type: Api
-          Properties:
-            Path: /{proxy+}
-            Method: ANY
-        RootResource:
-          Type: Api
-          Properties:
-            Path: /
-            Method: ANY
-      
+          - Action:
+              - 'xray:PutTelemetryRecords'
+              - 'xray:PutTraceSegments'
+            Resource: '*'
+            Effect: Allow
+      Roles:
+        - !Ref AspNetCoreFunctionRole
+  
 Outputs:
   ApiURL:
     Description: API endpoint URL for Prod environment
     Value:
-      Fn::Sub: https://replace-url.execute-api.${AWS::Region}.amazonaws.com/Prod
+      Fn::Sub: "https://${LambdaRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

@@ -320,7 +320,6 @@ Resources:
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       {
-                        "ProjectName" : "${ProjectName}"
                         "CodeUri" : "s3://provision.${ProjectName}.s3/lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
                       }
                   InputArtifacts:

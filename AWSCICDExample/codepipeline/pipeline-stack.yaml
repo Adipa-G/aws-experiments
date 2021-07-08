@@ -316,12 +316,12 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set'
-                    TemplatePath: OutputArtefact::AWSCICDExample/cloudformationtemplates/output_template.yaml
+                    TemplatePath: OutputArtefact::AWSCICDExample/cloudformationtemplates/template.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       { 
-                        ProjectName : ${ProjectName},
-                        CodeUri: s3://provision.${ProjectName}.s3/lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip
+                        "ProjectName" : "${ProjectName}",
+                        "CodeUri" : "s3://provision.${ProjectName}.s3/lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

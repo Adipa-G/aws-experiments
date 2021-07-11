@@ -33,7 +33,12 @@ Resources:
   LambdaRestApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
-      Name: lambda-api        
+      Name: lambda-api   
+      Body:
+        swagger: '2.0'
+        info:
+          version: '1.0'
+          title: lambda-api
   
   LambdaRestApiResource:
     Type: AWS::ApiGateway::Resource

@@ -3,15 +3,15 @@ Description: A Lambda function to run the app
 Parameters:
   ProjectName:
     Type: String
-    Default: test-api
+    Default: lamda-api
     Description: Name for the project (lower case)
   BucketName:
     Type: String
-    Default: provision.test-api.s3
+    Default: not-set
     Description: S3 bucket name where the lambda function package lives
   BucketKey:
     Type: String
-    Default: lambda/build_61.zip
+    Default: not-set
     Description: S3 bucket key of the lambda function package
   
 Transform: AWS::Serverless-2016-10-31

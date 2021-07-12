@@ -3,62 +3,46 @@ Description: A Lambda function to run the app
 Parameters:
   ProjectName:
     Type: String
-    Default: not-set
+    Default: test-api
     Description: Name for the project (lower case)
   BucketName:
     Type: String
-    Default: not-set
+    Default: provision.test-api.s3
     Description: S3 bucket name where the lambda function package lives
   BucketKey:
     Type: String
-    Default: not-set
+    Default: lambda/build_61.zip
     Description: S3 bucket key of the lambda function package
   
 Transform: AWS::Serverless-2016-10-31
 Resources:
-  ApiDeployment:
-    Type: 'AWS::ApiGateway::Deployment'
-    Properties:
-      RestApiId: !Ref LambdaRestApi
-      Description: 'RestApi deployment'
-      StageName: Stage
-  
-  ApiProdStage:
-    Type: 'AWS::ApiGateway::Stage'
-    Properties:
-      DeploymentId: !Ref ApiDeployment
-      RestApiId: !Ref LambdaRestApi
-      StageName: Prod
-  
   LambdaRestApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
-      Name: lambda-api   
+      Name: lambda-api  
       Body:
-        swagger: '2.0'
         info:
           version: '1.0'
-          title: lambda-api
-  
-  LambdaRestApiResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      ParentId: !GetAtt LambdaRestApi.RootResourceId
-      PathPart: '{proxy+}'
-      RestApiId: !Ref LambdaRestApi
-      
-  ApiGatewayMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      ResourceId: !Ref LambdaRestApiResource
-      RestApiId: !Ref LambdaRestApi
-      HttpMethod: ANY
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations'
-  
+          title: !Ref 'AWS::StackName'
+        paths:
+          '/{proxy+}':
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+          /:
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+        swagger: '2.0'
+       
   AspNetCoreFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -94,6 +78,20 @@ Resources:
         - Arn
       Timeout: 30
       Runtime: dotnetcore3.1
+      
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref LambdaRestApi
+      Description: 'RestApi deployment'
+      StageName: Stage
+  
+  ApiProdStage:
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref LambdaRestApi
+      StageName: Prod
       
   ApiProxyResourcePermissionProd:
     Type: 'AWS::Lambda::Permission'

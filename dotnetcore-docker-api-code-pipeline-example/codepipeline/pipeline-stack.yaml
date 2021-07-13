@@ -207,6 +207,9 @@ Resources:
               - Effect: Allow
                 Action: logs:*
                 Resource: '*'
+              - Effect: Allow
+                Action: ecr:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

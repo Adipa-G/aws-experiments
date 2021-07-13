@@ -1,5 +1,5 @@
 FROM microsoft/dotnet:aspnetcore-runtime
+COPY ./dotnetcore-docker-api-code-pipeline-example/out /api
 EXPOSE 80
-WORKDIR /app
-COPY --from= ./dotnetcore-docker-api-code-pipeline-example/out .
+WORKDIR /api
 ENTRYPOINT ["dotnet", "HealthAPI.dll"]

@@ -33,6 +33,10 @@ phases:
       - dotnet publish -c release -o ./dotnetcore-docker-api-code-pipeline-example/out
       - docker build -t ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} .
       - docker tag ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
+
+  post_build:
+    commands:
+      - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
       
 reports:
   jacoco-report:

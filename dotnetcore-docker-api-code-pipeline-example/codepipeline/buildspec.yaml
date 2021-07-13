@@ -1,0 +1,45 @@
+version: 0.2
+
+env:
+  exported-variables:
+    - CODEBUILD_BUILD_NUMBER
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 3.1
+    commands:
+      - dotnet tool install -g dotnet-format
+      - export PATH="$PATH:/root/.dotnet/tools"
+
+  pre_build:
+    commands:
+      - echo ${AWS_ACCOUNT_ID}
+      - echo ${AWS_REGION}
+      - echo ${CODEBUILD_BUILD_NUMBER}
+      - echo ${CODEBUILD_SRC_DIR}
+      - echo ${IMAGE_REPO_NAME}
+      
+      - apt-get upgrade
+      - apt-get update
+
+  build:
+    commands:
+
+      - dotnet format ./dotnetcore-docker-api-code-pipeline-example/api/api.sln --check
+      - dotnet restore ./dotnetcore-docker-api-code-pipeline-example/api/api.sln
+      - dotnet build ./dotnetcore-docker-api-code-pipeline-example/api/api.sln
+      - dotnet test ./dotnetcore-docker-api-code-pipeline-example/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
+      - dotnet publish -c release -o ./dotnetcore-docker-api-code-pipeline-example/out
+      - docker build -t ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} .
+      - docker tag ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
+      
+reports:
+  jacoco-report:
+    files:
+      - './dotnetcore-docker-api-code-pipeline-example/api/test/HealthAPI.Tests/TestResults/**/*.xml'
+    file-format: 'COBERTURAXML'
+
+artifacts:    
+  files:
+    - ./dotnetcore-docker-api-code-pipeline-example/cloudformationtemplates/template.yaml

@@ -263,7 +263,7 @@ Resources:
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
         Type: CODEPIPELINE
-        BuildSpec: dotnetcore-lamda-api-code-pipeline-example/codepipeline/buildspec.yaml
+        BuildSpec: dotnetcore-docker-api-code-pipeline-example/codepipeline/buildspec.yaml
       Tags:
         - Key: Project
           Value: !Ref ProjectName

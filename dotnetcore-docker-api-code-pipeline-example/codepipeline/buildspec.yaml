@@ -36,6 +36,7 @@ phases:
 
   post_build:
     commands:
+      - aws ecr get-login --region ${AWS_REGION}
       - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
       
 reports:

@@ -260,6 +260,7 @@ Resources:
             Value: !Sub ${AWS::AccountId}
           - Name: IMAGE_REPO_NAME
             Value: !Sub '${ProjectName}.ecr'
+        PrivilegedMode: true
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
         Type: CODEPIPELINE

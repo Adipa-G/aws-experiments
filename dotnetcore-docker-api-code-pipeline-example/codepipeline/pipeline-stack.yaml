@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: This stack is used to provision the CI/CD pipeline for a simple API
+Description: This stack is used to provision the CI/CD pipeline for a simple API to be packaged into a docker container and to deploy it to AWS Fargate
 Parameters:
   ProjectName:
     Type: String

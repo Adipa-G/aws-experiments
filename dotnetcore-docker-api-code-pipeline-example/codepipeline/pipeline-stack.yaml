@@ -3,7 +3,7 @@ Description: This stack is used to provision the CI/CD pipeline for a simple API
 Parameters:
   ProjectName:
     Type: String
-    Default: docker-api
+    Default: fargate-api
     Description: Name for the project (only lower case letters with '-')
     
 Resources:

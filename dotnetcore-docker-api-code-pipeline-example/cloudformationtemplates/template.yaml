@@ -1,139 +1,278 @@
-AWSTemplateFormatVersion: 2010-09-09
-Description: A Lambda function to run the app
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A stack for deploying containerized applications in AWS Fargate.
+             This stack runs containers in a public VPC subnet, and includes a
+             public facing load balancer to register the services in.
 Parameters:
   ProjectName:
     Type: String
-    Default: lamda-api
+    Default: fargate-api
     Description: Name for the project (lower case)
-  BucketName:
+  ContainerImageUrl:
     Type: String
     Default: not-set
-    Description: S3 bucket name where the lambda function package lives
-  BucketKey:
-    Type: String
-    Default: not-set
-    Description: S3 bucket key of the lambda function package
-  
-Transform: AWS::Serverless-2016-10-31
+    Description: Container image url
+             
+Mappings:
+  SubnetConfig:
+    VPC:
+      CIDR: '10.0.0.0/16'
+    PublicOne:
+      CIDR: '10.0.0.0/24'
+    PublicTwo:
+      CIDR: '10.0.1.0/24'
+
 Resources:
-  LambdaRestApi:
-    Type: 'AWS::ApiGateway::RestApi'
+  VPC:
+    Type: AWS::EC2::VPC
     Properties:
-      Name: lambda-api  
-      Body:
-        info:
-          version: '1.0'
-          title: !Ref 'AWS::StackName'
-        paths:
-          '/{proxy+}':
-            x-amazon-apigateway-any-method:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri: !Sub >-
-                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
-              responses: {}
-          /:
-            x-amazon-apigateway-any-method:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri: !Sub >-
-                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
-              responses: {}
-        swagger: '2.0'
-       
-  AspNetCoreFunctionRole:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: !FindInMap ['SubnetConfig', VPC, 'CIDR']
+
+  PublicSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 0
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
+      MapPublicIpOnLaunch: true
+
+  PublicSubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone:
+         Fn::Select:
+         - 1
+         - Fn::GetAZs: {Ref: 'AWS::Region'}
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap ['SubnetConfig', 'PublicTwo', 'CIDR']
+      MapPublicIpOnLaunch: true
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref 'InternetGateway'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref 'InternetGateway'
+
+  PublicSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetTwo
+      RouteTableId: !Ref PublicRouteTable
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['', [/ecs/api-cluster, TaskDefinition]]
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${ProjectName}-cluster'
+            
+  ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      AssumeRolePolicyDocument: 
-        Version: "2012-10-17"
+      RoleName: '${ProjectName}-execution-role'
+      AssumeRolePolicyDocument:
         Statement:
-          - Effect: "Allow"
-            Action: 'sts:AssumeRole'
+          - Effect: Allow
             Principal:
-              Service: lambda.amazonaws.com
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName 
-  
-  AspNetCoreFunction:
-    Type: 'AWS::Lambda::Function'
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  TaskRole:
+    Type: AWS::IAM::Role
     Properties:
-      TracingConfig:
-        Mode: Active
-      Code:
-        S3Bucket: !Sub '${BucketName}'
-        S3Key: !Sub '${BucketKey}'
-      Tags:
-        - Value: SAM
-          Key: 'lambda:createdBy'
-      MemorySize: 2048
-      Environment:
-        Variables:
-          env: Prod
-      Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
-      Role: !GetAtt 
-        - AspNetCoreFunctionRole
-        - Arn
-      Timeout: 30
-      Runtime: dotnetcore3.1
-      
-  ApiDeployment:
-    Type: 'AWS::ApiGateway::Deployment'
-    Properties:
-      RestApiId: !Ref LambdaRestApi
-      Description: 'RestApi deployment'
-      StageName: Stage
-  
-  ApiProdStage:
-    Type: 'AWS::ApiGateway::Stage'
-    Properties:
-      DeploymentId: !Ref ApiDeployment
-      RestApiId: !Ref LambdaRestApi
-      StageName: Prod
-      
-  ApiProxyResourcePermissionProd:
-    Type: 'AWS::Lambda::Permission'
-    Properties:
-      Action: 'lambda:InvokeFunction'
-      Principal: apigateway.amazonaws.com
-      FunctionName: !Ref AspNetCoreFunction
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LambdaRestApi}/*/*/*
-      
-  FunctionCloudWatchPolicy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      PolicyName: AspNetCoreFunctionCloudWatchPolicy
-      PolicyDocument:
-        Version: 2012-10-17
+      RoleName: '${ProjectName}-task-role'
+      AssumeRolePolicyDocument:
         Statement:
-          - Action:
-              - 'logs:CreateLogGroup'
-              - 'logs:CreateLogStream'
-              - 'logs:PutLogEvents'
-            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
-            Effect: Allow
-      Roles:
-        - !Ref AspNetCoreFunctionRole
-          
-  FunctionXRayPolicy:
-    Type: 'AWS::IAM::Policy'
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      
+
+  AutoScalingRole:
+    Type: AWS::IAM::Role
     Properties:
-      PolicyName: AspNetCoreFunctionXRayPolicy
-      PolicyDocument:
-        Version: 2012-10-17
+      RoleName: '${ProjectName}-auto-scale-role'
+      AssumeRolePolicyDocument:
         Statement:
-          - Action:
-              - 'xray:PutTelemetryRecords'
-              - 'xray:PutTraceSegments'
-            Resource: '*'
-            Effect: Allow
-      Roles:
-        - !Ref AspNetCoreFunctionRole
-  
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+
+  ContainerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: '${ProjectName}-container-security-group'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: '${ProjectName}-load-balancer-security-group'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: 60
+      Name: '${ProjectName}-load-balancer'
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Subnets:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: '/'
+      HealthCheckTimeoutSeconds: 5
+      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      Name: '${ProjectName}-target-group'
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60
+      TargetType: ip
+      VpcId: !Ref VPC
+
+  ListenerHTTP:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: LogGroup
+    Properties:
+      Family: !Sub '${ProjectName}-task-def'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: 256
+      Memory: 0.5GB
+      ExecutionRoleArn: !Ref ExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: '${ProjectName}-health-api'
+          Image: !Ref ContainerImageUrl
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogGroup
+              awslogs-stream-prefix: ecs
+
+  Service:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ListenerHTTP
+    Properties: 
+      ServiceName: 'api-cluster'
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref TaskDefinition
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 30
+      LaunchType: FARGATE
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PublicSubnetOne
+            - !Ref PublicSubnetTwo
+          SecurityGroups:
+            - !Ref ContainerSecurityGroup
+      LoadBalancers:
+        - ContainerName: '${ProjectName}-health-api'
+          ContainerPort: 80
+          TargetGroupArn: !Ref TargetGroup
+
+  AutoScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MinCapacity: 1
+      MaxCapacity: 10
+      ResourceId: !Join ['/', [service, !Ref Cluster, !GetAtt Service.Name]]
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+      RoleARN: !GetAtt AutoScalingRole.Arn
+
+  AutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: '${ProjectName}-auto-scaling-policy'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref AutoScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 10
+        ScaleOutCooldown: 10
+        TargetValue: 50
+        
 Outputs:
-  ApiURL:
-    Description: API endpoint URL for Prod environment
-    Value:
-      Fn::Sub: "https://${LambdaRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  ExternalUrl:
+    Description: The url of the external load balancer
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName']]
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrl' ] ]

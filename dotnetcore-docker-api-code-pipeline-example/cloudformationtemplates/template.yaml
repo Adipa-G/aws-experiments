@@ -28,6 +28,9 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: !FindInMap ['SubnetConfig', VPC, 'CIDR']
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   PublicSubnetOne:
     Type: AWS::EC2::Subnet
@@ -39,6 +42,9 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
       MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   PublicSubnetTwo:
     Type: AWS::EC2::Subnet
@@ -50,9 +56,16 @@ Resources:
       VpcId: !Ref VPC
       CidrBlock: !FindInMap ['SubnetConfig', 'PublicTwo', 'CIDR']
       MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   GatewayAttachement:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -64,6 +77,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -89,16 +105,22 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join ['', [/ecs/api-cluster, TaskDefinition]]
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   Cluster:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Sub '${ProjectName}-cluster'
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
             
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: '${ProjectName}-execution-role'
+      RoleName: !Sub '${ProjectName}-execution-role'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -107,23 +129,28 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: '${ProjectName}-task-role'
+      RoleName: !Sub '${ProjectName}-task-role'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: 'sts:AssumeRole'
-      
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   AutoScalingRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: '${ProjectName}-auto-scale-role'
+      RoleName: !Sub '${ProjectName}-auto-scale-role'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -132,28 +159,37 @@ Resources:
             Action: 'sts:AssumeRole'
       ManagedPolicyArns:
         - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: '${ProjectName}-container-security-group'
+      GroupDescription: !Sub '${ProjectName}-container-security-group'
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: '${ProjectName}-load-balancer-security-group'
+      GroupDescription: !Sub '${ProjectName}-load-balancer-security-group'
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -161,13 +197,16 @@ Resources:
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
           Value: 60
-      Name: '${ProjectName}-load-balancer'
+      Name: !Sub '${ProjectName}-load-balancer'
       Scheme: internet-facing
       SecurityGroups:
         - !Ref LoadBalancerSecurityGroup
       Subnets:
         - !Ref PublicSubnetOne
         - !Ref PublicSubnetTwo
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -177,7 +216,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       UnhealthyThresholdCount: 2
       HealthyThresholdCount: 2
-      Name: '${ProjectName}-target-group'
+      Name: !Sub '${ProjectName}-target-group'
       Port: 80
       Protocol: HTTP
       TargetGroupAttributes:
@@ -185,6 +224,9 @@ Resources:
           Value: 60
       TargetType: ip
       VpcId: !Ref VPC
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   ListenerHTTP:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -209,7 +251,7 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       TaskRoleArn: !Ref TaskRole
       ContainerDefinitions:
-        - Name: '${ProjectName}-health-api'
+        - Name: !Sub '${ProjectName}-health-api'
           Image: !Ref ContainerImageUrl
           PortMappings:
             - ContainerPort: 80
@@ -219,6 +261,9 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: ecs
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   Service:
     Type: AWS::ECS::Service
@@ -243,9 +288,12 @@ Resources:
           SecurityGroups:
             - !Ref ContainerSecurityGroup
       LoadBalancers:
-        - ContainerName: '${ProjectName}-health-api'
+        - ContainerName: !Sub '${ProjectName}-health-api'
           ContainerPort: 80
           TargetGroupArn: !Ref TargetGroup
+      Tags:
+      - Key: Project
+        Value: !Ref ProjectName 
 
   AutoScalingTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -260,7 +308,7 @@ Resources:
   AutoScalingPolicy:
     Type: AWS::ApplicationAutoScaling::ScalingPolicy
     Properties:
-      PolicyName: '${ProjectName}-auto-scaling-policy'
+      PolicyName: !Sub '${ProjectName}-auto-scaling-policy'
       PolicyType: TargetTrackingScaling
       ScalingTargetId: !Ref AutoScalingTarget
       TargetTrackingScalingPolicyConfiguration:

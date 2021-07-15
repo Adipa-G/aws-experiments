@@ -48,3 +48,4 @@ reports:
 artifacts:    
   files:
     - ./dotnetcore-docker-api-code-pipeline-example/cloudformationtemplates/template.yaml
+    - ./dotnetcore-docker-api-code-pipeline-example/codepipeline/pipeline-stack.yaml

@@ -105,9 +105,6 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Join ['', [/ecs/api-cluster, TaskDefinition]]
-      Tags:
-      - Key: Project
-        Value: !Ref ProjectName 
 
   Cluster:
     Type: AWS::ECS::Cluster

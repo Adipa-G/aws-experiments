@@ -302,6 +302,38 @@ Resources:
                   OutputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1
+            - Name: UpdatePipeline
+              Actions:
+                - Name: CreateChangeSet
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_REPLACE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-pipeline-stack'
+                    ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                    TemplatePath: OutputArtefact::dotnetcore-lamda-api-code-pipeline-example/codepipeline/pipeline-stack.yaml
+                    Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                  InputArtifacts:
+                    - Name: OutputArtefact
+                  RunOrder: 1
+                - Name: ExecuteChangeSet
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_EXECUTE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-pipeline-stack'
+                    ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                  RunOrder: 2
             - Name: Deploy
               Actions:
                 - Name: CreateChangeSet

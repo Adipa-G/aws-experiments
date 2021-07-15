@@ -42,3 +42,4 @@ reports:
 artifacts:    
   files:
     - ./dotnetcore-lamda-api-code-pipeline-example/cloudformationtemplates/template.yaml
+    - ./dotnetcore-lamda-api-code-pipeline-example/codepipeline/pipeline-stack.yaml

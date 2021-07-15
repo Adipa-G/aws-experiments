@@ -148,6 +148,9 @@ Resources:
               - Effect: Allow
                 Action: elasticloadbalancingv2:*
                 Resource: '*'
+              - Effect: Allow
+                Action: elasticloadbalancing:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

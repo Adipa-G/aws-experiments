@@ -142,6 +142,9 @@ Resources:
               - Effect: Allow
                 Action: kms:*
                 Resource: '*'
+              - Effect: Allow
+                Action: logs:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

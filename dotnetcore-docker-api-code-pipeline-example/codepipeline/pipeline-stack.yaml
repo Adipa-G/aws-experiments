@@ -151,6 +151,9 @@ Resources:
               - Effect: Allow
                 Action: elasticloadbalancing:*
                 Resource: '*'
+              - Effect: Allow
+                Action: application-autoscaling:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

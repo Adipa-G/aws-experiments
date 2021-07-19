@@ -43,7 +43,7 @@ Resources:
       - Key: Project
         Value: !Ref ProjectName 
 
-  GatewayAttachement:
+  InternetGatewayAttachement:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
@@ -107,13 +107,13 @@ Resources:
 
   NatGatewayOneGatewayAttachment:
     Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
+    DependsOn: InternetGatewayAttachement
     Properties:
       Domain: vpc
 
   NatGatewayTwoGatewayAttachment:
     Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
+    DependsOn: InternetGatewayAttachement
     Properties:
       Domain: vpc
 
@@ -139,7 +139,7 @@ Resources:
 
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: GatewayAttachement
+    DependsOn: InternetGatewayAttachement
     Properties:
       RouteTableId: !Ref 'PublicRouteTable'
       DestinationCidrBlock: '0.0.0.0/0'

@@ -6,7 +6,7 @@ This folder contains an AWS code pipeline to package a dotnet core API into a do
 
 * Fork this repository.
 * Open the AWS management console.
-* Create a GitHub PAT (personal access token) and store it in secrets manager as `github-pat-token`
+* Create a GitHub PAT (personal access token)
 * Open the secrets manager and create a new secret named `github-pat-token` 
 * Create a new secret value with key `token` within the secret `github-pat-token` and store the GitHub PAT created as the value.
 * Create a new stack named `fargate-api-pipeline-stack` (via Services -> Cloud Formation) using the `codepipeline/pipeline-stack.yaml` file.
@@ -15,6 +15,15 @@ This folder contains an AWS code pipeline to package a dotnet core API into a do
 * A new stak named `fargate-api-stack` will appear (check Services -> Cloud Formation)
 * When you open the new stack and view the `Oputputs` section, there is the URL for the new API 
 * Test the API endpoint in the browser and it'll result in `Hello World`. Further you can test <URL for the new API>/api/health endpoint to see the controller method being executed.
+
+## Variations
+
+There are multiple templates for the fargate cluser, and you can select which template to be used by updating the file codepipeline/pipeline-stack.yaml
+
+* cloudformationtemplates\template.yaml creates the ECS cluster in a public subnet
+* cloudformationtemplates\template-private-subnet.yaml creates ECS cluster in a private subnet.
+
+
 
 ## References
 

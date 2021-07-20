@@ -122,8 +122,8 @@ Resources:
       SecurityGroups:
         - !Ref LoadBalancerSecurityGroup
       Subnets:
-        - !Ref !GetAtt NetworkStack.Outputs.PublicSubnetOne
-        - !Ref !GetAtt NetworkStack.Outputs.PublicSubnetTwo
+        - !GetAtt NetworkStack.Outputs.PublicSubnetOne
+        - !GetAtt NetworkStack.Outputs.PublicSubnetTwo
       Tags:
       - Key: Project
         Value: !Ref ProjectName 
@@ -203,8 +203,8 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           Subnets:
-            - !Ref !GetAtt NetworkStack.Outputs.PrivateSubnetOne
-            - !Ref !GetAtt NetworkStack.Outputs.PrivateSubnetTwo
+            - !GetAtt NetworkStack.Outputs.PrivateSubnetOne
+            - !GetAtt NetworkStack.Outputs.PrivateSubnetTwo
           SecurityGroups:
             - !Ref ContainerSecurityGroup
       LoadBalancers:

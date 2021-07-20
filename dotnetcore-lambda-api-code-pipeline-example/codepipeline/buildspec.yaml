@@ -43,3 +43,4 @@ artifacts:
   files:
     - ./dotnetcore-lambda-api-code-pipeline-example/cloudformationtemplates/template.yaml
     - ./dotnetcore-lambda-api-code-pipeline-example/codepipeline/pipeline-stack.yaml
+    - ./dotnetcore-lambda-api-code-pipeline-example/codepipeline/buildspec.yaml

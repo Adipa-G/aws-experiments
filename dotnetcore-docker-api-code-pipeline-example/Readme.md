@@ -34,7 +34,7 @@ The pipeline has following steps:
 
 There are multiple templates for the fargate cluser, and you can select which template to be used by updating the file codepipeline/pipeline-stack.yaml
 
-* cloudformationtemplates\template.yaml creates the ECS cluster in a public subnet
+* cloudformationtemplates\template-public-subnet.yaml creates the ECS cluster in a public subnet
 * cloudformationtemplates\template-private-subnet.yaml creates ECS cluster in a private subnet.
 
 

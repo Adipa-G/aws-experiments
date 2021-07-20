@@ -101,7 +101,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Sub '${ProjectName}-load-balancer-security-group'
-      VpcId: !Ref VPC
+      VpcId: !GetAtt NetworkStack.Outputs.VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -143,7 +143,7 @@ Resources:
         - Key: deregistration_delay.timeout_seconds
           Value: 60
       TargetType: ip
-      VpcId: !Ref VPC
+      VpcId: !GetAtt NetworkStack.Outputs.VPC
       Tags:
       - Key: Project
         Value: !Ref ProjectName 

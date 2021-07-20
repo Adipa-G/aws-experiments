@@ -384,7 +384,7 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
-                    TemplatePath: OutputArtefact::dotnetcore-docker-api-code-pipeline-example/cloudformationtemplates/template-private-subnet.yaml
+                    TemplatePath: OutputArtefact::dotnetcore-docker-api-code-pipeline-example/cloudformationtemplates/template-public-subnet.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       { 

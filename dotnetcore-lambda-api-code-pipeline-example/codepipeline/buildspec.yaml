@@ -31,7 +31,7 @@ phases:
       - dotnet build ./dotnetcore-lambda-api-code-pipeline-example/api/api.sln
       - dotnet test ./dotnetcore-lambda-api-code-pipeline-example/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
       - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/dotnetcore-lambda-api-code-pipeline-example/api/src/HealthAPI -o ${CODEBUILD_SRC_DIR}/dotnetcore-lambda-api-code-pipeline-example/lambda_build_output.zip
-      - aws s3 cp ./dotnetcore-lambda-api-code-pipeline-example/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.zip 
+      - aws s3 cp ./dotnetcore-lambda-api-code-pipeline-example/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.zip --recursive 
       
 reports:
   jacoco-report:

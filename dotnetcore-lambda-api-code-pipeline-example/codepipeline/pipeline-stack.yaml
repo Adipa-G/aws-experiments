@@ -3,7 +3,7 @@ Description: This stack is used to provision the CI/CD pipeline for a simple API
 Parameters:
   ProjectName:
     Type: String
-    Default: lamda-api
+    Default: lambda-api
     Description: Name for the project (only lower case letters with '-')
     
 Resources:
@@ -252,7 +252,7 @@ Resources:
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
         Type: CODEPIPELINE
-        BuildSpec: dotnetcore-lamda-api-code-pipeline-example/codepipeline/buildspec.yaml
+        BuildSpec: dotnetcore-lambda-api-code-pipeline-example/codepipeline/buildspec.yaml
       Tags:
         - Key: Project
           Value: !Ref ProjectName
@@ -322,7 +322,7 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-pipeline-stack'
                     ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
-                    TemplatePath: OutputArtefact::dotnetcore-lamda-api-code-pipeline-example/codepipeline/pipeline-stack.yaml
+                    TemplatePath: OutputArtefact::dotnetcore-lambda-api-code-pipeline-example/codepipeline/pipeline-stack.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                   InputArtifacts:
                     - Name: OutputArtefact
@@ -354,7 +354,7 @@ Resources:
                     RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
-                    TemplatePath: OutputArtefact::dotnetcore-lamda-api-code-pipeline-example/cloudformationtemplates/template.yaml
+                    TemplatePath: OutputArtefact::dotnetcore-lambda-api-code-pipeline-example/cloudformationtemplates/template.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
                     ParameterOverrides: !Sub |
                       { 

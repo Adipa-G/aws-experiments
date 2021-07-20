@@ -3,7 +3,7 @@ Description: A Lambda function to run the app
 Parameters:
   ProjectName:
     Type: String
-    Default: lamda-api
+    Default: lambda-api
     Description: Name for the project (lower case)
   BucketName:
     Type: String

@@ -87,7 +87,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: !Sub '${ProjectName}-container-security-group'
-      VpcId: !Ref VPC
+      VpcId: !GetAtt NetworkStack.Outputs.VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80

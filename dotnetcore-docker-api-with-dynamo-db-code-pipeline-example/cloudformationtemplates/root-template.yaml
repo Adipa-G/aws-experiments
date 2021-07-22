@@ -63,6 +63,14 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: DBPermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: dynamodb:*
+                Resource: '*'
       Tags:
       - Key: Project
         Value: !Ref ProjectName 

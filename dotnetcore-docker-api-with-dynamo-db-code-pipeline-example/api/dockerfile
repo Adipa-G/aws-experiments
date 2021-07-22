@@ -1,0 +1,5 @@
+FROM mcr.microsoft.com/dotnet/aspnet:3.1
+COPY ./dotnetcore-docker-api-with-dynamo-db-code-pipeline-example/out /api
+EXPOSE 80
+WORKDIR /api
+ENTRYPOINT ["dotnet", "HealthAPI.dll"]

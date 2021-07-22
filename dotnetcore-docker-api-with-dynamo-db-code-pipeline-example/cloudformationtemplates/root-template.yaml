@@ -169,7 +169,8 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       TaskRoleArn: !Ref TaskRole
       ContainerDefinitions:
-        - Image: !Ref ContainerImageUrl
+        - Name: !Sub '${ProjectName}-health-api'
+          Image: !Ref ContainerImageUrl
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:

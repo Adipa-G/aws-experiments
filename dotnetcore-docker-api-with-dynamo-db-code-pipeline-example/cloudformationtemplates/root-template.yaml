@@ -258,7 +258,7 @@ Resources:
         - AttributeName: driver
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
-      TableName: F1LapRecords
+      TableName: LapRecords
         
 Outputs:
   ExternalUrl:

@@ -243,6 +243,22 @@ Resources:
         ScaleInCooldown: 10
         ScaleOutCooldown: 10
         TargetValue: 50
+
+  F1LapRecordsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      TableName: F1LapRecords
         
 Outputs:
   ExternalUrl:

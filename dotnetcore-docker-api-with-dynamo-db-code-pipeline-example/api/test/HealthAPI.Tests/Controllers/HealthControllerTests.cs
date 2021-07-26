@@ -25,7 +25,7 @@ namespace HealthAPI.Tests.Controllers
         }
 
         [Fact]
-        public async Task GivenHealthy_WhenIndex_ThenReturnResponse()
+        public async Task GivenHealthy_WhenGetAsync_ThenReturnResponse()
         {
             _dynamoDb.ListTablesAsync().Returns(new ListTablesResponse()
             {
@@ -33,19 +33,19 @@ namespace HealthAPI.Tests.Controllers
             });
 
             var sut = CreateSut();
-            var response = await sut.Index() as ObjectResult;
+            var response = await sut.GetAsync() as ObjectResult;
 
             response.Should().NotBeNull();
             response?.Value.Should().BeEquivalentTo(new { API = true, DB = true });
         }
 
         [Fact]
-        public async Task GivenNoDbConnectivity_WhenIndex_ThenReturnResponse()
+        public async Task GivenNoDbConnectivity_WhenGetAsync_ThenReturnResponse()
         {
             _dynamoDb.ListTablesAsync().Throws(new Exception());
 
             var sut = CreateSut();
-            var response = await sut.Index() as ObjectResult;
+            var response = await sut.GetAsync() as ObjectResult;
 
             response.Should().NotBeNull();
             response?.Value.Should().BeEquivalentTo(new { API = true, DB = false });

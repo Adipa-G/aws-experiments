@@ -21,11 +21,12 @@ namespace HealthAPI.Controllers
 
         [Route("")]
         [HttpGet]
-        public async Task<ActionResult> Index()
+        public async Task<ActionResult> GetAsync()
         {
             var dbHealthy = false;
             try
             {
+
                 var tables = await _dynamoDb.ListTablesAsync();
                 dbHealthy = tables.TableNames.Count >= 0;
             }

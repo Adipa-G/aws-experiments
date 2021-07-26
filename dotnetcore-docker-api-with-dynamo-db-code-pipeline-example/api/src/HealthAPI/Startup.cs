@@ -35,7 +35,7 @@ namespace HealthAPI
         {
             var awsConfig = _configuration.GetSection("AWS").Get<AwsConfig>();
             var dynamoDbConfig = new AmazonDynamoDBConfig() { RegionEndpoint = RegionEndpoint.USEast2 };
-            if (awsConfig.IsLocal)
+            if (awsConfig != null && awsConfig.IsLocal)
             {
                 dynamoDbConfig.ServiceURL = awsConfig.DynamoDbEndpointUrl;
             }

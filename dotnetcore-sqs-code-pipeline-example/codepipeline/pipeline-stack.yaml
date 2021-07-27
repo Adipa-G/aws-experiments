@@ -102,7 +102,7 @@ Resources:
             Principal:
               Service:
                 - cloudformation.amazonaws.com
-                - cloudformation.amazonaws.com
+                - codepipeline.amazonaws.com
             Action: sts:AssumeRole
           - Effect: Allow
             Principal:
@@ -150,9 +150,6 @@ Resources:
                 Resource: '*'
               - Effect: Allow
                 Action: codepipeline:*
-                Resource: '*'
-              - Effect: Allow
-                Action: codebuild:*
                 Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:

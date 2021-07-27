@@ -19,7 +19,7 @@ Resources:
   LambdaRestApi:
     Type: 'AWS::ApiGateway::RestApi'
     Properties:
-      Name: lambda-api  
+      Name: !Sub ${ProjectName}
       Body:
         info:
           version: '1.0'

@@ -3,7 +3,7 @@ Description: This stack is used to provision the CI/CD pipeline for an API hoste
 Parameters:
   ProjectName:
     Type: String
-    Default: lambda-api
+    Default: sqs-api
     Description: Name for the project (only lower case letters with '-')
     
 Resources:
@@ -327,6 +327,10 @@ Resources:
                     ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
                     TemplatePath: OutputArtefact::dotnetcore-sqs-code-pipeline-example/codepipeline/pipeline-stack.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                    ParameterOverrides: !Sub |
+                      { 
+                        "ProjectName" : "${ProjectName}"
+                      }
                   InputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1

@@ -354,6 +354,10 @@ Resources:
                     ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
                     TemplatePath: OutputArtefact::dotnetcore-docker-api-code-pipeline-example/codepipeline/pipeline-stack.yaml
                     Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                    ParameterOverrides: !Sub |
+                      { 
+                        "ProjectName" : "${ProjectName}"
+                      }
                   InputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1

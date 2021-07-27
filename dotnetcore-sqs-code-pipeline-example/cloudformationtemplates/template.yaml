@@ -1,0 +1,156 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: A Lambda function to run the app
+Parameters:
+  ProjectName:
+    Type: String
+    Default: lambda-api
+    Description: Name for the project (lower case)
+  BucketName:
+    Type: String
+    Default: not-set
+    Description: S3 bucket name where the lambda function package lives
+  BucketKey:
+    Type: String
+    Default: not-set
+    Description: S3 bucket key of the lambda function package
+  
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  LambdaRestApi:
+    Type: 'AWS::ApiGateway::RestApi'
+    Properties:
+      Name: lambda-api  
+      Body:
+        info:
+          version: '1.0'
+          title: !Ref 'AWS::StackName'
+        paths:
+          '/{proxy+}':
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+          /:
+            x-amazon-apigateway-any-method:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub >-
+                  arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AspNetCoreFunction.Arn}/invocations
+              responses: {}
+        swagger: '2.0'
+       
+  AspNetCoreFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: 'sts:AssumeRole'
+            Principal:
+              Service: lambda.amazonaws.com
+      Policies:
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: sqs:*
+                Resource: !Sub '${ProjectName}.queue'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName 
+  
+  AspNetCoreFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      TracingConfig:
+        Mode: Active
+      Code:
+        S3Bucket: !Sub '${BucketName}'
+        S3Key: !Sub '${BucketKey}'
+      Tags:
+        - Value: SAM
+          Key: 'lambda:createdBy'
+      MemorySize: 2048
+      Environment:
+        Variables:
+          env: Prod
+          Queue::Name: !Sub '${ProjectName}.queue'
+      Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
+      Role: !GetAtt 
+        - AspNetCoreFunctionRole
+        - Arn
+      Timeout: 30
+      Runtime: dotnetcore3.1
+      
+  ApiDeployment:
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref LambdaRestApi
+      Description: 'RestApi deployment'
+      StageName: Stage
+  
+  ApiProdStage:
+    Type: 'AWS::ApiGateway::Stage'
+    Properties:
+      DeploymentId: !Ref ApiDeployment
+      RestApiId: !Ref LambdaRestApi
+      StageName: Prod
+      
+  ApiProxyResourcePermissionProd:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      FunctionName: !Ref AspNetCoreFunction
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${LambdaRestApi}/*/*/*
+      
+  FunctionCloudWatchPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: AspNetCoreFunctionCloudWatchPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+            Effect: Allow
+      Roles:
+        - !Ref AspNetCoreFunctionRole
+          
+  FunctionXRayPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: AspNetCoreFunctionXRayPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 'xray:PutTelemetryRecords'
+              - 'xray:PutTraceSegments'
+            Resource: '*'
+            Effect: Allow
+      Roles:
+        - !Ref AspNetCoreFunctionRole
+
+  Queue:
+    Type: 'AWS::SQS::Queue'
+    Properties:
+      QueueName: !Sub '${ProjectName}.queue'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName 
+  
+Outputs:
+  ApiURL:
+    Description: API endpoint URL for Prod environment
+    Value:
+      Fn::Sub: "https://${LambdaRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

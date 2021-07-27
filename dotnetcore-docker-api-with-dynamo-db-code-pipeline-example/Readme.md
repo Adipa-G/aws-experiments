@@ -1,6 +1,7 @@
 # AWS Code Pipelines
 
 This folder contains an AWS code pipeline to deploy a dotnet core API into a docker image and deploy it into AWS Fargate.
+The API has two endpoint to store and retrieve data from a DynamoDB
 The template is nested in this example.
 
 The pipeline has following steps:
@@ -15,7 +16,7 @@ The pipeline has following steps:
   * Publish docker image to the container registry
   * Publish code coverage report
 * Self update the code pipeline
-* Create / Update the lambda function running the API
+* Create / Update the ECS cluster running the API
 
 ## Setting up
 
@@ -30,3 +31,12 @@ The pipeline has following steps:
 * A new stak named `fargate-api-stack` will appear (check Services -> Cloud Formation)
 * When you open the new stack and view the `Oputputs` section, there is the URL for the new API 
 * Test the API endpoint in the browser and it'll result in `Hello World`. Further you can test <URL for the new API>/api/health endpoint to see the controller method being executed.
+* POST following payload to the <URL for the new API>/api/LapRecords to store it in the DynamoDB
+```
+{
+	"track": "SPA",
+	"driver": "Lewis Hamilton",
+	"lapTime": "1:11.103"
+}	
+```
+* To retrieve stored entries send a GET request to <URL for the new API>/api/LapRecords

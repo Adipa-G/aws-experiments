@@ -14,7 +14,7 @@ The pipeline has following steps:
   * Publish docker image to the container registry
   * Publish code coverage report
 * Self update the code pipeline
-* Create / Update the lambda function running the API
+* Create / Update the ECS cluster running the API
 
 ## Setting up
 

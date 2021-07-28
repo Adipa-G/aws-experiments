@@ -47,7 +47,7 @@ Resources:
               responses: {}
         swagger: '2.0'
        
-  LambdaFunctionRole:
+  LambdaRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument: 
@@ -87,7 +87,7 @@ Resources:
           QueueName: !Sub '${ProjectName}-queue'
       Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
       Role: !GetAtt 
-        - LambdaFunctionRole
+        - LambdaRole
         - Arn
       Timeout: 30
       Runtime: dotnetcore3.1
@@ -109,7 +109,7 @@ Resources:
           env: Prod
       Handler: 'Function::Function.QueueTriggerFunction::FunctionHandlerAsync'
       Role: !GetAtt 
-        - LambdaFunctionRole
+        - LambdaRole
         - Arn
       Timeout: 30
       Runtime: dotnetcore3.1
@@ -150,7 +150,7 @@ Resources:
             Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
             Effect: Allow
       Roles:
-        - !Ref AspNetCoreFunctionRole
+        - !Ref LambdaRole
           
   FunctionXRayPolicy:
     Type: 'AWS::IAM::Policy'
@@ -165,7 +165,7 @@ Resources:
             Resource: '*'
             Effect: Allow
       Roles:
-        - !Ref AspNetCoreFunctionRole
+        - !Ref LambdaRole
 
   Queue:
     Type: 'AWS::SQS::Queue'

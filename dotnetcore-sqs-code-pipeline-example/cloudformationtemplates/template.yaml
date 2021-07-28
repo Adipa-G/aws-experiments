@@ -80,7 +80,7 @@ Resources:
       Environment:
         Variables:
           env: Prod
-          Queue::Name: !Sub '${ProjectName}-queue'
+          QueueName: !Sub '${ProjectName}-queue'
       Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
       Role: !GetAtt 
         - AspNetCoreFunctionRole

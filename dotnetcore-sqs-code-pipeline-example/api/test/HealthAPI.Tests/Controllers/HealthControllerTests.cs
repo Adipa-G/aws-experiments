@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
-using HealthAPI.Config;
 using HealthAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,19 +16,19 @@ namespace HealthAPI.Tests.Controllers
     {
         private readonly IAmazonSQS _sqs;
         private readonly ILogger<HealthController> _logger;
-        private QueueConfig _queueConfig;
+        private Config.ApiConfig _apiConfig;
 
         public HealthControllerTests()
         {
             _sqs = Substitute.For<IAmazonSQS>();
             _logger = Substitute.For<ILogger<HealthController>>();
-            _queueConfig = new QueueConfig() { Name = "test" };
+            _apiConfig = new Config.ApiConfig() { QueueName = "test" };
         }
 
         [Fact]
         public async Task GivenHealthy_WhenGetAsync_ThenReturnResponse()
         {
-            _sqs.GetQueueUrlAsync(_queueConfig.Name).Returns(Task.FromResult(new GetQueueUrlResponse()));
+            _sqs.GetQueueUrlAsync(_apiConfig.QueueName).Returns(Task.FromResult(new GetQueueUrlResponse()));
 
             var sut = CreateSut();
             var response = await sut.Index() as ObjectResult;
@@ -41,7 +40,7 @@ namespace HealthAPI.Tests.Controllers
         [Fact]
         public async Task GivenNoDbConnectivity_WhenGetAsync_ThenReturnResponse()
         {
-            _sqs.GetQueueUrlAsync(_queueConfig.Name).Throws(new Exception());
+            _sqs.GetQueueUrlAsync(_apiConfig.QueueName).Throws(new Exception());
 
             var sut = CreateSut();
             var response = await sut.Index() as ObjectResult;
@@ -52,7 +51,7 @@ namespace HealthAPI.Tests.Controllers
 
         private HealthController CreateSut()
         {
-            return new HealthController(_sqs, _logger, _queueConfig);
+            return new HealthController(_sqs, _logger, _apiConfig);
         }
     }
 }

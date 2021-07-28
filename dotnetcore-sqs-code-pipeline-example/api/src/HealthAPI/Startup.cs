@@ -30,7 +30,7 @@ namespace HealthAPI
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            var queueConfig = _configuration.GetSection("Queue").Get<QueueConfig>();
+            var queueConfig = _configuration.Get<Config.ApiConfig>();
             services.AddSingleton(queueConfig);
 
             var queueClient = new AmazonSQSClient();

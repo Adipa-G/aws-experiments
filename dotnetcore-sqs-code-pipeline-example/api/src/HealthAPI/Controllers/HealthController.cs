@@ -12,15 +12,15 @@ namespace HealthAPI.Controllers
     {
         private readonly IAmazonSQS _amazonSqs;
         private readonly ILogger<HealthController> _logger;
-        private readonly QueueConfig _queueConfig;
+        private readonly Config.ApiConfig _apiConfig;
 
         public HealthController(IAmazonSQS amazonSqs,
             ILogger<HealthController> logger,
-            QueueConfig queueConfig)
+            Config.ApiConfig apiConfig)
         {
             _amazonSqs = amazonSqs;
             _logger = logger;
-            _queueConfig = queueConfig;
+            _apiConfig = apiConfig;
         }
 
         [Route("")]
@@ -30,7 +30,7 @@ namespace HealthAPI.Controllers
             var queueHealthy = false;
             try
             {
-                var queueDetails = await _amazonSqs.GetQueueUrlAsync(_queueConfig.Name);
+                var queueDetails = await _amazonSqs.GetQueueUrlAsync(_apiConfig.QueueName);
                 queueHealthy = queueDetails != null;
             }
             catch (Exception e)

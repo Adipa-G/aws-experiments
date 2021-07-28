@@ -10,17 +10,17 @@ namespace HealthAPI.Controllers
     [Route("/api/health")]
     public class HealthController
     {
+        private readonly ApiConfig _apiConfig;
         private readonly IAmazonSQS _amazonSqs;
         private readonly ILogger<HealthController> _logger;
-        private readonly Config.ApiConfig _apiConfig;
 
-        public HealthController(IAmazonSQS amazonSqs,
-            ILogger<HealthController> logger,
-            Config.ApiConfig apiConfig)
+        public HealthController(ApiConfig apiConfig,
+            IAmazonSQS amazonSqs,
+            ILogger<HealthController> logger)
         {
+            _apiConfig = apiConfig;
             _amazonSqs = amazonSqs;
             _logger = logger;
-            _apiConfig = apiConfig;
         }
 
         [Route("")]

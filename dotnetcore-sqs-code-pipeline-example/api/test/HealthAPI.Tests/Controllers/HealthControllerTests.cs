@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using FluentAssertions;
+using HealthAPI.Config;
 using HealthAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -14,15 +15,16 @@ namespace HealthAPI.Tests.Controllers
 {
     public class HealthControllerTests
     {
+        private readonly ApiConfig _apiConfig;
         private readonly IAmazonSQS _sqs;
         private readonly ILogger<HealthController> _logger;
-        private Config.ApiConfig _apiConfig;
+
 
         public HealthControllerTests()
         {
+            _apiConfig = new ApiConfig() { QueueName = "test" };
             _sqs = Substitute.For<IAmazonSQS>();
             _logger = Substitute.For<ILogger<HealthController>>();
-            _apiConfig = new Config.ApiConfig() { QueueName = "test" };
         }
 
         [Fact]
@@ -51,7 +53,7 @@ namespace HealthAPI.Tests.Controllers
 
         private HealthController CreateSut()
         {
-            return new HealthController(_sqs, _logger, _apiConfig);
+            return new HealthController(_apiConfig, _sqs, _logger);
         }
     }
 }

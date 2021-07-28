@@ -367,7 +367,8 @@ Resources:
                       { 
                         "ProjectName" : "${ProjectName}",
                         "BucketName" : "provision.${ProjectName}.s3",
-                        "BucketKey" : "lambda/build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
+                        "ApiBucketKey" : "lambda/api_build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip",
+                        "FunctionBucketKey" : "lambda/function_build_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.zip"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

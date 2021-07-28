@@ -9,10 +9,14 @@ Parameters:
     Type: String
     Default: not-set
     Description: S3 bucket name where the lambda function package lives
-  BucketKey:
+  ApiBucketKey:
     Type: String
     Default: not-set
-    Description: S3 bucket key of the lambda function package
+    Description: S3 bucket key of the api lambda function package
+  FunctionBucketKey:
+    Type: String
+    Default: not-set
+    Description: S3 bucket key of the sqs trigger function package
   
 Transform: AWS::Serverless-2016-10-31
 Resources:
@@ -43,7 +47,7 @@ Resources:
               responses: {}
         swagger: '2.0'
        
-  AspNetCoreFunctionRole:
+  LambdaFunctionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument: 
@@ -72,7 +76,7 @@ Resources:
         Mode: Active
       Code:
         S3Bucket: !Sub '${BucketName}'
-        S3Key: !Sub '${BucketKey}'
+        S3Key: !Sub '${ApiBucketKey}'
       Tags:
         - Value: SAM
           Key: 'lambda:createdBy'
@@ -83,7 +87,29 @@ Resources:
           QueueName: !Sub '${ProjectName}-queue'
       Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
       Role: !GetAtt 
-        - AspNetCoreFunctionRole
+        - LambdaFunctionRole
+        - Arn
+      Timeout: 30
+      Runtime: dotnetcore3.1
+      
+  SqsTriggerFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      TracingConfig:
+        Mode: Active
+      Code:
+        S3Bucket: !Sub '${BucketName}'
+        S3Key: !Sub '${FunctionBucketKey}'
+      Tags:
+        - Value: SAM
+          Key: 'lambda:createdBy'
+      MemorySize: 2048
+      Environment:
+        Variables:
+          env: Prod
+      Handler: 'Function::Function.QueueTriggerFunction::FunctionHandlerAsync'
+      Role: !GetAtt 
+        - LambdaFunctionRole
         - Arn
       Timeout: 30
       Runtime: dotnetcore3.1
@@ -148,6 +174,14 @@ Resources:
       Tags:
         - Key: Project
           Value: !Ref ProjectName 
+  
+  LambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt Queue.Arn
+      FunctionName: !GetAtt SqsTriggerFunction.Arn
   
 Outputs:
   ApiURL:

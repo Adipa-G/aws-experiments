@@ -30,8 +30,10 @@ phases:
       - dotnet restore ./dotnetcore-sqs-code-pipeline-example/api/api.sln
       - dotnet build ./dotnetcore-sqs-code-pipeline-example/api/api.sln
       - dotnet test ./dotnetcore-sqs-code-pipeline-example/api/test/HealthAPI.Tests/HealthAPI.Tests.csproj --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura
-      - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/api/src/HealthAPI -o ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/lambda_build_output.zip
-      - aws s3 cp ./dotnetcore-sqs-code-pipeline-example/lambda_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.zip
+      - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/api/src/HealthAPI -o ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/api_build_output.zip
+      - dotnet lambda package -c release -pl ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/api/src/Function -o ${CODEBUILD_SRC_DIR}/dotnetcore-sqs-code-pipeline-example/function_build_output.zip
+      - aws s3 cp ./dotnetcore-sqs-code-pipeline-example/api_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/api_build_${CODEBUILD_BUILD_NUMBER}.zip
+      - aws s3 cp ./dotnetcore-sqs-code-pipeline-example/function_build_output.zip s3://${BUILD_OUTPUT_BUCKET}/lambda/function_build_${CODEBUILD_BUILD_NUMBER}.zip
       
 reports:
   jacoco-report:

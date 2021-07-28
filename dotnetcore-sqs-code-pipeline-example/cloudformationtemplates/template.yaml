@@ -60,7 +60,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sqs:*
-                Resource: !Ref Queue
+                Resource: '*'
       Tags:
         - Key: Project
           Value: !Ref ProjectName 

@@ -60,7 +60,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sqs:*
-                Resource: !Sub '${ProjectName}.queue'
+                Resource: !Sub '${ProjectName}-queue'
       Tags:
         - Key: Project
           Value: !Ref ProjectName 
@@ -80,7 +80,7 @@ Resources:
       Environment:
         Variables:
           env: Prod
-          Queue::Name: !Sub '${ProjectName}.queue'
+          Queue::Name: !Sub '${ProjectName}-queue'
       Handler: 'HealthAPI::HealthAPI.LambdaEntryPoint::FunctionHandlerAsync'
       Role: !GetAtt 
         - AspNetCoreFunctionRole
@@ -144,7 +144,7 @@ Resources:
   Queue:
     Type: 'AWS::SQS::Queue'
     Properties:
-      QueueName: !Sub '${ProjectName}.queue'
+      QueueName: !Sub '${ProjectName}-queue'
       Tags:
         - Key: Project
           Value: !Ref ProjectName 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using Amazon.SimpleNotificationService;
 using Amazon.SimpleNotificationService.Model;
@@ -29,6 +30,8 @@ namespace HealthAPI.Tests.Controllers
         public async Task GivenRecord_WhenAddAsync_ThenSend()
         {
             var msg = new Message() { PhoneNumber = "123", Text = "abc" };
+            _sns.PublishAsync(Arg.Any<PublishRequest>())
+                .Returns(Task.FromResult(new PublishResponse() {HttpStatusCode = HttpStatusCode.OK}));
 
             var sut = CreateSut();
             var response = await sut.AddAsync(msg) as StatusCodeResult;

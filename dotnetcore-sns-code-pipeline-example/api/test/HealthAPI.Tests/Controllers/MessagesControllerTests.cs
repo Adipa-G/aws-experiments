@@ -31,7 +31,7 @@ namespace HealthAPI.Tests.Controllers
         {
             var msg = new Message() { PhoneNumber = "123", Text = "abc" };
             _sns.PublishAsync(Arg.Any<PublishRequest>())
-                .Returns(Task.FromResult(new PublishResponse() {HttpStatusCode = HttpStatusCode.OK}));
+                .Returns(Task.FromResult(new PublishResponse() { HttpStatusCode = HttpStatusCode.OK }));
 
             var sut = CreateSut();
             var response = await sut.AddAsync(msg) as StatusCodeResult;

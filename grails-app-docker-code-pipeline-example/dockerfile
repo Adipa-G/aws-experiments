@@ -1,5 +1,5 @@
 FROM openjdk:8 AS build
-COPY ./app /home/app
+COPY ./grails-app-docker-code-pipeline-example/app /home/app
 RUN apt-get update && apt install zip
 RUN export SDKMAN_DIR=/home/sdkman \
 	&& curl -s "https://get.sdkman.io" | bash \

@@ -5,7 +5,7 @@ Description: A stack for deploying containerized applications in AWS Fargate.
 Parameters:
   ProjectName:
     Type: String
-    Default: fargate-api
+    Default: grails-app
     Description: Name for the project (lower case)
   ContainerImageUrl:
     Type: String

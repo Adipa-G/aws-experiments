@@ -19,6 +19,8 @@ The pipeline has following steps:
 ## Setting up
 
 * Fork this repository.
+* Open the `/codepipeline/pipeline-stack.yaml` file and update the text `Owner: Adipa-G` to `Owner: <your github organisation name, and ensure to use the same case>`
+* Commit the file `/codepipeline/pipeline-stack.yaml`
 * Open the AWS management console.
 * Create a GitHub PAT (personal access token)
 * Open the secrets manager and create a new secret named `github-pat-token` 

@@ -326,9 +326,6 @@ Resources:
   ListenerHTTP:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref TargetGroup
-          Type: forward
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP

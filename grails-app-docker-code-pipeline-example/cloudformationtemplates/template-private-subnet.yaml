@@ -343,7 +343,7 @@ Resources:
         - Field: 'path-pattern'
           PathPatternConfig:
             Values:
-              - 'microservice1'
+              - '/test-app-0.1/*'
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -427,6 +427,6 @@ Resources:
 Outputs:
   ExternalUrl:
     Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/microservice1/test-app-0.1/']]
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrl' ] ]

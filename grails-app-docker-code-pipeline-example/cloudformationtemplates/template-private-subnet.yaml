@@ -307,7 +307,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: '/test-app-0.1/'
+      HealthCheckPath: '/microservice1/test-app-0.1/'
       HealthCheckTimeoutSeconds: 5
       UnhealthyThresholdCount: 2
       HealthyThresholdCount: 2
@@ -332,6 +332,20 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
+      
+  ListenerHTTPRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Priority: 1
+      ListenerArn: !Ref ListenerHTTP
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      Conditions:
+        - Field: 'path-pattern'
+          PathPatternConfig:
+            Values:
+              - '/microservice1/*'
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -416,6 +430,6 @@ Resources:
 Outputs:
   ExternalUrl:
     Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/microservice1/test-app-0.1/']]
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrl' ] ]

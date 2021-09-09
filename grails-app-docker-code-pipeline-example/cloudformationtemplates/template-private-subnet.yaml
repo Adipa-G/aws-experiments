@@ -306,7 +306,6 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: !Sub '${ProjectName}-target-group'
       VpcId: !Ref VPC
       Port: 80
       Protocol: HTTP

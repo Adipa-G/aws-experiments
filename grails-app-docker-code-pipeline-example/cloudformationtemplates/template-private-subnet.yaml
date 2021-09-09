@@ -306,19 +306,17 @@ Resources:
   TargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 10
-      HealthCheckPath: '/microservice1/test-app-0.1/'
-      HealthCheckTimeoutSeconds: 5
-      UnhealthyThresholdCount: 2
-      HealthyThresholdCount: 2
       Name: !Sub '${ProjectName}-target-group'
+      VpcId: !Ref VPC
       Port: 80
       Protocol: HTTP
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: 60
-      TargetType: ip
-      VpcId: !Ref VPC
+      Matcher:
+        HttpCode: 200-299
+      HealthCheckIntervalSeconds: 10
+      HealthCheckPath: /microservice1/test-app-0.1
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
       Tags:
       - Key: Project
         Value: !Ref ProjectName 
@@ -326,6 +324,9 @@ Resources:
   ListenerHTTP:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
@@ -342,7 +343,7 @@ Resources:
         - Field: 'path-pattern'
           PathPatternConfig:
             Values:
-              - '/microservice1/*'
+              - 'microservice1'
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition

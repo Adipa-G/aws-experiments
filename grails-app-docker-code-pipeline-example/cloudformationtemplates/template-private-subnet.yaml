@@ -316,6 +316,7 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
+      TargetType: ip
       Tags:
       - Key: Project
         Value: !Ref ProjectName 

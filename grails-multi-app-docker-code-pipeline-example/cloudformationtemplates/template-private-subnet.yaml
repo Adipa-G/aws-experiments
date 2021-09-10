@@ -367,7 +367,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       Priority: 1
-      ListenerArn: !Ref ListenerHTTP
+      ListenerArn: !Ref ListenerHTTPAppOne
       Actions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroupAppOne
@@ -381,7 +381,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       Priority: 1
-      ListenerArn: !Ref ListenerHTTP
+      ListenerArn: !Ref ListenerHTTPAppTwo
       Actions:
         - Type: forward
           TargetGroupArn: !Ref TargetGroupAppTwo
@@ -550,8 +550,13 @@ Resources:
         TargetValue: 50
         
 Outputs:
-  ExternalUrl:
-    Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]
+  ExternalUrlAppOne:
+    Description: The url of the app one
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-one-0.1/']]
     Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrl' ] ]
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrlAppOne' ] ]
+  ExternalUrlAppTwo:
+    Description: The url of the app two
+    Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-two-0.1/']]
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrlAppTwo' ] ]

@@ -4,3 +4,5 @@
 **/*.sln.DotSettings.user
 **/appsettings.Development.json
 /grails-app-docker-code-pipeline-example/app/target/*
+**/plugin-classes/*
+**/target/*

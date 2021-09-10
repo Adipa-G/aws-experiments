@@ -206,7 +206,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Join ['', [/ecs/web-cluster, AppOneTaskDefinition]]
+      LogGroupName: !Join ['', [/ecs/web-cluster, TaskDefinition]]
 
   Cluster:
     Type: AWS::ECS::Cluster
@@ -326,7 +326,7 @@ Resources:
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /test-app-one-0.1
+      HealthCheckPath: /test-app-one-0.1/
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -344,7 +344,7 @@ Resources:
       Matcher:
         HttpCode: 200-299
       HealthCheckIntervalSeconds: 10
-      HealthCheckPath: /test-app-two-0.1
+      HealthCheckPath: /test-app-two-0.1/
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
@@ -419,7 +419,7 @@ Resources:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
       DesiredCount: 1
-      HealthCheckGracePeriodSeconds: 300
+      HealthCheckGracePeriodSeconds: 120
       LaunchType: FARGATE
       NetworkConfiguration: 
         AwsvpcConfiguration:
@@ -475,7 +475,7 @@ Resources:
         MinimumHealthyPercent: 100
         MaximumPercent: 200
       DesiredCount: 1
-      HealthCheckGracePeriodSeconds: 300
+      HealthCheckGracePeriodSeconds: 120
       LaunchType: FARGATE
       NetworkConfiguration: 
         AwsvpcConfiguration:

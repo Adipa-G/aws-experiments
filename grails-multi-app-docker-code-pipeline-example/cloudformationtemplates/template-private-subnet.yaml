@@ -328,7 +328,7 @@ Resources:
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: /test-app-one-0.1/health
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckTimeoutSeconds: 30
       HealthyThresholdCount: 2
       TargetType: ip
       Tags:
@@ -346,7 +346,7 @@ Resources:
       HealthCheckIntervalSeconds: 10
       HealthCheckPath: /test-app-two-0.1/health
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckTimeoutSeconds: 30
       HealthyThresholdCount: 2
       TargetType: ip
       Tags:

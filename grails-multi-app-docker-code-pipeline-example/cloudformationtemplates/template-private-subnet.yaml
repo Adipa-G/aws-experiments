@@ -365,7 +365,7 @@ Resources:
         - Field: 'path-pattern'
           PathPatternConfig:
             Values:
-              - '/test-app-one/*'
+              - 'test-app-one*'
 
   ListenerHTTPRuleAppTwo:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
@@ -379,7 +379,7 @@ Resources:
         - Field: 'path-pattern'
           PathPatternConfig:
             Values:
-              - '/test-app-two/*'
+              - 'test-app-two*'
 
   AppOneTaskDefinition:
     Type: AWS::ECS::TaskDefinition

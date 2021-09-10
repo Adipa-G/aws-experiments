@@ -442,7 +442,7 @@ Resources:
       LoadBalancers:
         - ContainerName: !Sub '${ProjectName}-web'
           ContainerPort: 80
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupAppOne
       Tags:
       - Key: Project
         Value: !Ref ProjectName 
@@ -498,7 +498,7 @@ Resources:
       LoadBalancers:
         - ContainerName: !Sub '${ProjectName}-two'
           ContainerPort: 80
-          TargetGroupArn: !Ref TargetGroup
+          TargetGroupArn: !Ref TargetGroupAppTwo
       Tags:
       - Key: Project
         Value: !Ref ProjectName 

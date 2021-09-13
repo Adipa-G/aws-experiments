@@ -325,7 +325,7 @@ Resources:
       Protocol: HTTP
       Matcher:
         HttpCode: 200-299
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckPath: /test-app-one-0.1/health
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 10
@@ -343,7 +343,7 @@ Resources:
       Protocol: HTTP
       Matcher:
         HttpCode: 200-299
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckPath: /test-app-two-0.1/health
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 10

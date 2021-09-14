@@ -1,13 +1,13 @@
 # AWS Code Pipelines
 
-This folder contains an AWS code pipeline to deploy a Grails application,
+This folder contains an AWS code pipeline to deploy two Grails applications, with load balancer configured to route traffic to each application.
 
 The pipeline has following steps:
 
 * Checking out from GitHub repo
-* Build Grails application
+* Build both Grails applications
 * Self update the code pipeline
-* Create / Update the ECS cluster running the Application
+* Create / Update the ECS cluster running applications
 
 ## Setting up
 
@@ -18,9 +18,9 @@ The pipeline has following steps:
 * Create a GitHub PAT (personal access token)
 * Open the secrets manager and create a new secret named `github-pat-token` 
 * Create a new secret value with key `token` within the secret `github-pat-token` and store the GitHub PAT created as the value.
-* Create a new stack named `grails-app-pipeline-stack` (via Services -> Cloud Formation) using the `codepipeline/pipeline-stack.yaml` file.
+* Create a new stack named `grails-multi-apps-pipeline-stack` (via Services -> Cloud Formation) using the `codepipeline/pipeline-stack.yaml` file.
 * Open the code pipelines in the AWS management console and click on the `Release Change` button.
-* This will execute the pipeline and create a new stack with a Fargate cluster
-* A new stack named `grails-app-stack` will appear (check Services -> Cloud Formation)
-* When you open the new stack and view the `Oputputs` section, there is the URL for the new application
-* Test the URL in the browser and it'll render the application
+* This will execute the pipeline and create a new stack with a Fargate ECS cluster
+* A new stack named `grails-multi-apps-stack` will appear (check Services -> Cloud Formation)
+* When you open the new stack and view the `Oputputs` section, there are URLs for each application
+* Test each url in the browser and it'll render the application

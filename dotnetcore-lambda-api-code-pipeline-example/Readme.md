@@ -4,7 +4,7 @@ This folder contains an AWS code pipeline to deploy a dotnet core API into a lam
 
 The pipeline has following steps:
 
-* Cheking out from GitHub repo
+* Checking out from GitHub repo
 * Build
   * Enforce code formatting
   * Restore packages

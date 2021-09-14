@@ -6,7 +6,7 @@ This folder contains an AWS code pipeline to deploy,
 
 The pipeline has following steps:
 
-* Cheking out from GitHub repo
+* Checking out from GitHub repo
 * Build
   * Enforce code formatting
   * Restore packages
@@ -40,5 +40,5 @@ The pipeline has following steps:
 	"lapTime": "1:11.103"
 }	
 ```
-* The consumtion function would write the content of the messages into the logs. You can check it from the cloud watch logs for the the `SqsTriggerFunction`
+* The consumption function would write the content of the messages into the logs. You can check it from the cloud watch logs for the the `SqsTriggerFunction`
 

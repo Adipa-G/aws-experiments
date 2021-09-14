@@ -85,7 +85,7 @@
 		<div id="status" role="complementary">
 			<h1>Application Status</h1>
 			<ul>
-				<li>App name: Application One</li>
+				<li><strong>App name: Application One</strong></li>
 				<li>App version: <g:meta name="app.version"/></li>
 				<li>Grails version: <g:meta name="app.grails.version"/></li>
 				<li>Groovy version: ${GroovySystem.getVersion()}</li>

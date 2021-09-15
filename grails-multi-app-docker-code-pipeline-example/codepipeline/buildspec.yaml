@@ -20,6 +20,7 @@ phases:
     commands:
 
       - docker build -t ${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER} ./grails-multi-app-docker-code-pipeline-example/test-app-one
+      - docker cp ${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER}:/home/TESTS-TestSuites.xml ./app-one-results.xml
       - docker tag ${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER}
 
       - docker build -t ${IMAGE_REPO_NAME}:test-app-two-${CODEBUILD_BUILD_NUMBER} ./grails-multi-app-docker-code-pipeline-example/test-app-two
@@ -30,7 +31,13 @@ phases:
       - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
       - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER}
       - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:test-app-two-${CODEBUILD_BUILD_NUMBER}
-      
+
+reports:
+  jacoco-report:
+    files:
+      - './app-one-results.xml'
+    file-format: 'COBERTURAXML'
+
 artifacts:    
   files:
     - ./grails-multi-app-docker-code-pipeline-example/cloudformationtemplates/template-private-subnet.yaml

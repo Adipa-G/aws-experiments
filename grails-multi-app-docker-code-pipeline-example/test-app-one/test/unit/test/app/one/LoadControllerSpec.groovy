@@ -16,5 +16,10 @@ class LoadControllerSpec extends Specification {
     }
 
     void "test something"() {
+        when:
+        def x = 1
+        
+        then:
+        1 == 1
     }
 }

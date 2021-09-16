@@ -39,7 +39,7 @@ reports:
   jacoco-report:
     files:
       - './app-one-results.xml'
-    file-format: 'COBERTURAXML'
+    file-format: 'JUNITXML'
 
 artifacts:    
   files:

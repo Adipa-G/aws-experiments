@@ -6,6 +6,7 @@ The pipeline has following steps:
 
 * Checking out from GitHub repo
 * Build both Grails applications
+* Publish unit test results
 * Self update the code pipeline
 * Create / Update the ECS cluster running applications
 

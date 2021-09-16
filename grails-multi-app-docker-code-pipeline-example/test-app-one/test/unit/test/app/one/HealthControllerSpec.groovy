@@ -15,7 +15,7 @@ class HealthControllerSpec extends Specification {
     def cleanup() {
     }
 
-    void "test something"() {
+    void "test health controller"() {
         when:
         def x = 1
         

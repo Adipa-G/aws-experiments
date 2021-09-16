@@ -15,7 +15,7 @@ class LoadControllerSpec extends Specification {
     def cleanup() {
     }
 
-    void "test something"() {
+    void "app one test load controller"() {
         when:
         def x = 1
         

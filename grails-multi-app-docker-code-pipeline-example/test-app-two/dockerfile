@@ -8,9 +8,11 @@ RUN export SDKMAN_DIR=/home/sdkman \
 	&& yes | /bin/bash -l -c 'sdk install groovy 2.4.5'
 RUN /bin/bash -l -c 'cd /home/app && grails clean-all' \
 	&& /bin/bash -l -c 'cd /home/app && grails compile' \
+	&& /bin/bash -l -c 'cd /home/app && grails test-app' \
 	&& /bin/bash -l -c 'cd /home/app && grails war' 
 	
 FROM tomcat:9.0.52-jre8-openjdk
+COPY --from=build /home/app/target/test-reports/TESTS-TestSuites.xml /home/TESTS-TestSuites.xml
 COPY --from=build /home/app/target/test-app-two-0.1.war /usr/local/tomcat/webapps/
 RUN sed -i 's/port="8080"/port="80"/' /usr/local/tomcat/conf/server.xml
 EXPOSE 80

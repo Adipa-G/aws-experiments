@@ -1,7 +1,8 @@
 package test.app.two
 
 class HealthController {
+    String appName = System.getenv("APP_NAME")
     def index() { 
-        render(contentType: "application/json", text: "{\"healthy\":\"false\", \"app-name\":\"two\"}")                
+        render(contentType: "application/json", text: "{\"healthy\":\"false\", \"app-name\":\"" + appName + "\"}")                
     }
 }

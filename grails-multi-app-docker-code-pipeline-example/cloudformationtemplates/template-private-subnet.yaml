@@ -397,7 +397,7 @@ Resources:
         - Name: !Sub '${ProjectName}-one'
           Image: !Ref AppOneContainerImageUrl
           Environment:
-            - APP_NAME: "app_one"
+            - "APP_NAME": "app_one"
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:
@@ -455,7 +455,7 @@ Resources:
         - Name: !Sub '${ProjectName}-two'
           Image: !Ref AppTwoContainerImageUrl
           Environment:
-            - APP_NAME: "app_two"
+            - "APP_NAME": "app_two"
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:

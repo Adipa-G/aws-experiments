@@ -397,7 +397,6 @@ Resources:
         - Name: !Sub '${ProjectName}-one'
           Image: !Ref AppOneContainerImageUrl
           Environment:
-            Environment:
             - Name: "APP_NAME"
               Value: "app_one"
           PortMappings:

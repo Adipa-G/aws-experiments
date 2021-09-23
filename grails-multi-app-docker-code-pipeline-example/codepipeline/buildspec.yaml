@@ -20,7 +20,7 @@ phases:
     commands:
       - docker build ./grails-multi-app-docker-code-pipeline-example -f ./grails-multi-app-docker-code-pipeline-example/dockerfile_build_base -t app-build-base:latest
 
-      - docker build ./grails-multi-app-docker-code-pipeline-example/test-app-one -f ./grails-multi-app-docker-code-pipeline-example/test-app-one/dockerfile_build -t app-one-build  
+      - docker build ./grails-multi-app-docker-code-pipeline-example/test-app-one -f ./grails-multi-app-docker-code-pipeline-example/test-app-one/dockerfile_build -t app-one-build:latest  
       - docker build ./grails-multi-app-docker-code-pipeline-example/test-app-one -f ./grails-multi-app-docker-code-pipeline-example/test-app-one/dockerfile_release -t ${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER}
       - docker tag ${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:test-app-one-${CODEBUILD_BUILD_NUMBER}
 

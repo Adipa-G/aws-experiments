@@ -1,0 +1,6 @@
+FROM app-build-base:latest AS build
+COPY . /home/app
+RUN /bin/bash -l -c 'cd /home/app && grails clean-all' \
+	&& /bin/bash -l -c 'cd /home/app && grails compile' \
+	&& /bin/bash -l -c 'cd /home/app && grails test-app' \
+	&& /bin/bash -l -c 'cd /home/app && grails war' 

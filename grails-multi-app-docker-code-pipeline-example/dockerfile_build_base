@@ -1,0 +1,7 @@
+FROM openjdk:8 AS build
+RUN apt-get update && apt install zip
+RUN export SDKMAN_DIR=/home/sdkman \
+	&& curl -s "https://get.sdkman.io" | bash \
+	&& chmod 777 ./home/sdkman/bin/sdkman-init.sh \
+	&& yes | /bin/bash -l -c 'sdk install grails 2.5.4' \
+	&& yes | /bin/bash -l -c 'sdk install groovy 2.4.5'

@@ -160,6 +160,9 @@ Resources:
               - Effect: Allow
                 Action: codepipeline:*
                 Resource: '*'
+              - Effect: Allow
+                Action: codebuild:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

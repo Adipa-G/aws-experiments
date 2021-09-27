@@ -25,7 +25,7 @@ phases:
 
       - app_id=$(docker create app-build:latest)
       - docker cp $app_id:/home/app/target/test-reports/TESTS-TestSuites.xml ./test-results.xml
-      - docker rm -v $app_one_id
+      - docker rm -v $app_id
 
   post_build:
     commands:

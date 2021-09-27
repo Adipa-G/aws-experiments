@@ -5,6 +5,7 @@ This folder contains an AWS code pipeline to deploy a dotnet core API into a lam
 The pipeline has following steps:
 
 * Checking out from GitHub repo
+* Self update the code pipeline
 * Build
   * Enforce code formatting
   * Restore packages
@@ -12,7 +13,6 @@ The pipeline has following steps:
   * Run unit tests
   * Create lambda function package
   * Publish code coverage report
-* Self update the code pipeline
 * Create / Update the lambda function running the API
 
 ## Setting up

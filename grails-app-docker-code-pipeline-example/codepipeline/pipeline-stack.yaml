@@ -324,22 +324,6 @@ Resources:
                   OutputArtifacts:
                     - Name: SourceArtefact
                   RunOrder: 1
-            - Name: Build
-              Actions:
-                - Name: CodeBuild
-                  Namespace: BuildVariables
-                  ActionTypeId:
-                    Category: Build
-                    Owner: AWS
-                    Provider: CodeBuild
-                    Version: '1'
-                  Configuration:
-                    ProjectName: !Ref CodeBuildProject
-                  InputArtifacts:
-                    - Name: SourceArtefact
-                  OutputArtifacts:
-                    - Name: OutputArtefact
-                  RunOrder: 1
             - Name: UpdatePipeline
               Actions:
                 - Name: CreateChangeSet
@@ -376,6 +360,22 @@ Resources:
                     StackName: !Sub '${ProjectName}-pipeline-stack'
                     ChangeSetName: !Sub '${ProjectName}-pipeline-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
                   RunOrder: 2
+            - Name: Build
+              Actions:
+                - Name: CodeBuild
+                  Namespace: BuildVariables
+                  ActionTypeId:
+                    Category: Build
+                    Owner: AWS
+                    Provider: CodeBuild
+                    Version: '1'
+                  Configuration:
+                    ProjectName: !Ref CodeBuildProject
+                  InputArtifacts:
+                    - Name: SourceArtefact
+                  OutputArtifacts:
+                    - Name: OutputArtefact
+                  RunOrder: 1
             - Name: Deploy
               Actions:
                 - Name: CreateChangeSet

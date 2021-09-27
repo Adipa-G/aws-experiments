@@ -19,14 +19,25 @@ phases:
   build:
     commands:
 
-      - docker build -t ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ./grails-app-docker-code-pipeline-example
+      - docker build ./grails-app-docker-code-pipeline-example -f ./grails-app-docker-code-pipeline-example/dockerfile_build -t app-build:latest
+      - docker build ./grails-app-docker-code-pipeline-example -f ./grails-app-docker-code-pipeline-example/dockerfile_release -t ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} 
       - docker tag ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
+
+      - app_id=$(docker create app-build:latest)
+      - docker cp $app_id:/home/app/target/test-reports/TESTS-TestSuites.xml ./test-results.xml
+      - docker rm -v $app_one_id
 
   post_build:
     commands:
       - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
       - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
-      
+
+reports:
+  junit-report:
+    files:
+      - './app-results.xml'
+    file-format: 'JUNITXML'
+
 artifacts:    
   files:
     - ./grails-app-docker-code-pipeline-example/cloudformationtemplates/template-private-subnet.yaml

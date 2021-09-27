@@ -12,6 +12,7 @@ phases:
       - echo ${CODEBUILD_BUILD_NUMBER}
       - echo ${CODEBUILD_SRC_DIR}
       - echo ${IMAGE_REPO_NAME}
+      - echo ${ENV_OUTPUT_BUCKET}
       
       - apt-get upgrade
       - apt-get update
@@ -26,6 +27,8 @@ phases:
       - app_id=$(docker create app-build:latest)
       - docker cp $app_id:/home/app/target/test-reports/TESTS-TestSuites.xml ./test-results.xml
       - docker rm -v $app_id
+
+      - aws s3 cp ./grails-app-docker-code-pipeline-example/cloud.env s3://${ENV_OUTPUT_BUCKET}/lambda/build_${CODEBUILD_BUILD_NUMBER}.env
 
   post_build:
     commands:

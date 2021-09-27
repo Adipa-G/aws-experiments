@@ -278,6 +278,8 @@ Resources:
             Value: !Sub ${AWS::AccountId}
           - Name: IMAGE_REPO_NAME
             Value: !Sub '${ProjectName}.ecr'
+          - Name: ENV_OUTPUT_BUCKET
+            Value: !Sub provision.${ProjectName}.s3
         PrivilegedMode: true
       ServiceRole: !GetAtt PipelineRole.Arn
       Source: 
@@ -393,7 +395,9 @@ Resources:
                     ParameterOverrides: !Sub |
                       { 
                         "ProjectName" : "${ProjectName}",
-                        "ContainerImageUrl" : "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}.ecr:#{BuildVariables.CODEBUILD_BUILD_NUMBER}"
+                        "ContainerImageUrl" : "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}.ecr:#{BuildVariables.CODEBUILD_BUILD_NUMBER}",
+                        "EnvironmentBucketName": "provision.${ProjectName}.s3",
+                        "EnvironmentBucketKey": "/env/cloud_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.env"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

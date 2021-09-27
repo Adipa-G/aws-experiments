@@ -360,6 +360,9 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub '${ProjectName}-web'
           Image: !Ref ContainerImageUrl
+          Environment:
+            - Name: "APP_NAME"
+              Value: "app"
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:

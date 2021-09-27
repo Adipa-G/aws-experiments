@@ -372,7 +372,7 @@ Resources:
             - Name: "APP_NAME"
               Value: "app"
           EnvironmentFiles:
-            - Value: !Sub "https://s3.${AWS::Region}.amazonaws.com/${EnvironmentBucketName}/${EnvironmentBucketKey}"
+            - Value: !Sub "arn:aws:s3:::${EnvironmentBucketName}/${EnvironmentBucketKey}"
               Type: "S3"
           PortMappings:
             - ContainerPort: 80

@@ -373,7 +373,7 @@ Resources:
               Value: "app"
           EnvironmentFiles:
             - Value: !Sub "arn:aws:s3:::${EnvironmentBucketName}/${EnvironmentBucketKey}"
-              Type: "S3"
+              Type: "s3"
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:

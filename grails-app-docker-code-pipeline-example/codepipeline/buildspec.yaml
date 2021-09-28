@@ -39,5 +39,4 @@ reports:
 
 artifacts:    
   files:
-    - ./grails-app-docker-code-pipeline-example/cloudformationtemplates/template-private-subnet.yaml
-    - ./grails-app-docker-code-pipeline-example/codepipeline/pipeline-stack.yaml
+    - '**/*'

@@ -21,7 +21,7 @@ phases:
     commands:
 
       - docker build ./grails-app-docker-code-pipeline-example -t ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
-      - docker build ./grails-app-docker-code-pipeline-example --target export-test-results --output type=local,dest=.
+      - docker build ./grails-app-docker-code-pipeline-example --target export-test-results --output type=local,dest=${CODEBUILD_SRC_DIR}/test-results
       - docker tag ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
 
       - aws s3 cp ./grails-app-docker-code-pipeline-example/cloud.env s3://${ENV_OUTPUT_BUCKET}/env/cloud_${CODEBUILD_BUILD_NUMBER}.env
@@ -34,7 +34,7 @@ phases:
 reports:
   junit-report:
     files:
-      - './grails-app-docker-code-pipeline-example/TESTS-TestSuites.xml'
+      - '${CODEBUILD_SRC_DIR}/test-results/TESTS-TestSuites.xml'
     file-format: 'JUNITXML'
 
 artifacts:    

@@ -1,0 +1,23 @@
+FROM openjdk:8 as build
+RUN apt-get update && apt install zip
+RUN export SDKMAN_DIR=/home/sdkman \
+	&& curl -s "https://get.sdkman.io" | bash \
+	&& chmod 777 ./home/sdkman/bin/sdkman-init.sh \
+	&& yes | /bin/bash -l -c 'sdk install grails 2.5.4' \
+	&& yes | /bin/bash -l -c 'sdk install groovy 2.4.5'
+COPY ./app /home/app
+RUN /bin/bash -l -c 'cd /home/app && grails clean-all' \
+	&& /bin/bash -l -c 'cd /home/app && grails compile' \
+	&& /bin/bash -l -c 'cd /home/app && grails war' 
+
+FROM build AS test
+RUN /bin/bash -l -c 'cd /home/app && grails test-app' 
+
+FROM scratch AS export-test-results
+COPY --from=test /home/app/target/test-reports/TESTS-TestSuites.xml .
+
+FROM tomcat:9.0.52-jre8-openjdk AS release
+COPY --from=build /home/app/target/test-app-0.1.war /usr/local/tomcat/webapps/
+RUN sed -i 's/port="8080"/port="80"/' /usr/local/tomcat/conf/server.xml
+EXPOSE 80
+CMD ["catalina.sh", "run"]

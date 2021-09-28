@@ -240,6 +240,9 @@ Resources:
               - Effect: Allow
                 Action: s3:*
                 Resource: '*'
+              - Effect: Allow
+                Action: kms:*
+                Resource: '*'
       Tags:
       - Key: Project
         Value: !Ref ProjectName 
@@ -261,6 +264,9 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:*
+              Resource: '*'
+            - Effect: Allow
+              Action: kms:*
               Resource: '*'
       Tags:
       - Key: Project

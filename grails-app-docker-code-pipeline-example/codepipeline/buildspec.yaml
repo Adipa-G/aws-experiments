@@ -34,7 +34,7 @@ phases:
 reports:
   junit-report:
     files:
-      - './test-results/*.xml'
+      - './test-results/TESTS-TestSuites.xml'
     file-format: 'JUNITXML'
 
 artifacts:    

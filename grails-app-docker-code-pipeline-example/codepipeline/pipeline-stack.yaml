@@ -324,7 +324,7 @@ Resources:
                   Configuration:
                     Owner: Adipa-G
                     Repo: aws-experiments
-                    Branch: '*'
+                    Branch: master
                     OAuthToken:  "{{resolve:secretsmanager:github-pat-token:SecretString:token}}"
                   OutputArtifacts:
                     - Name: SourceArtefact

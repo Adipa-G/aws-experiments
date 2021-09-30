@@ -164,6 +164,9 @@ Resources:
               - Effect: Allow
                 Action: codebuild:*
                 Resource: '*'
+              - Effect: Allow
+                Action: wafv2:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

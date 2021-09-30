@@ -517,9 +517,7 @@ Resources:
           - DomainName: !GetAtt 'LoadBalancer.DNSName'
             Id: LoadBalancerDNS
             CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-              OriginSSLProtocols:
-                - TLSv1.2
+              OriginProtocolPolicy: http-only
             OriginCustomHeaders:
                - HeaderName: cf_key
                  HeaderValue: secret
@@ -540,6 +538,6 @@ Outputs:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ALBUrl' ] ]
   CFUrl:
     Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'CFDistribution.DNSName', '/test-app-0.1/']]
+    Value: !Join ['', ['http://', !GetAtt 'CFDistribution.DomainName', '/test-app-0.1/']]
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CFUrl' ] ]

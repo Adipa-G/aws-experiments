@@ -167,6 +167,9 @@ Resources:
               - Effect: Allow
                 Action: wafv2:*
                 Resource: '*'
+              - Effect: Allow
+                Action: cloudfront:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

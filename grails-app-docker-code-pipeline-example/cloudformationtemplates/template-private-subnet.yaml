@@ -508,10 +508,38 @@ Resources:
     Properties:
       WebACLArn: !GetAtt WebACL.Arn
       ResourceArn: !Ref LoadBalancer
+
+  CFDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt 'LoadBalancer.DNSName'
+            Id: LoadBalancerDNS
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+            OriginCustomHeaders:
+               - HeaderName: cf_key
+                 HeaderValue: secret
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          TargetOriginId: LoadBalancerDNS
+          ViewerProtocolPolicy: allow-all
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
         
 Outputs:
-  ExternalUrl:
+  ALBUrl:
     Description: The url of the external load balancer
     Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]
     Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ExternalUrl' ] ]
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ALBUrl' ] ]
+  CFUrl:
+    Description: The url of the external load balancer
+    Value: !Join ['', ['http://', !GetAtt 'CFDistribution.DNSName', '/test-app-0.1/']]
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CFUrl' ] ]

@@ -459,6 +459,29 @@ Resources:
         ScaleInCooldown: 10
         ScaleOutCooldown: 10
         TargetValue: 50
+
+  WebACL:
+    Type: 'AWS::WAFv2::WebACL'
+    Properties:
+      Name: HeaderCheck
+      Scope: "REGIONAL"
+      DefaultAction:
+        Block:
+          CustomResponse:
+            ResponseCode: 503
+            ResponseHeaders:
+              - Name: RejectReason
+                Value: MissingCloudFrontHeader 
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: HeaderCheck
+
+  WebACLLoadBalancerAssociation:
+    Type: 'AWS::WAFv2::WebACLAssociation'
+    Properties:
+      WebACLArn: WebACL
+      ResourceArn: LoadBalancer
         
 Outputs:
   ExternalUrl:

@@ -460,10 +460,19 @@ Resources:
         ScaleOutCooldown: 10
         TargetValue: 50
 
+  HeaderRegexPatternSet:
+    Type: AWS::WAFv2::RegexPatternSet
+    Properties:
+      Name: HeaderVerifyRegex
+      Scope: REGIONAL
+      Description: Verify the header
+      RegularExpressionList:
+        - ^secret$
+
   WebACL:
     Type: 'AWS::WAFv2::WebACL'
     Properties:
-      Name: HeaderCheck
+      Name: LoadBalancerWAF
       Scope: "REGIONAL"
       DefaultAction:
         Block:
@@ -475,13 +484,30 @@ Resources:
       VisibilityConfig:
         SampledRequestsEnabled: true
         CloudWatchMetricsEnabled: true
-        MetricName: HeaderCheck
+        MetricName: LoadBalancerWAF
+      Rules:
+        - Name: HeaderCheckRule
+          Priority: 0
+          Action:
+            Allow: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: MetricForHeaderCheckRule
+          Statement:
+            RegexPatternSetReferenceStatement:
+              Arn: !GetAtt HeaderRegexPatternSet.Arn
+              FieldToMatch:
+                SingleHeader: {"Name":"cf_key"}
+              TextTransformations:
+                - Priority: 0
+                  Type: LOWERCASE
 
   WebACLLoadBalancerAssociation:
     Type: 'AWS::WAFv2::WebACLAssociation'
     Properties:
-      WebACLArn: WebACL
-      ResourceArn: LoadBalancer
+      WebACLArn: !GetAtt WebACL.Arn
+      ResourceArn: !Ref LoadBalancer
         
 Outputs:
   ExternalUrl:

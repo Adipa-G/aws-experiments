@@ -408,7 +408,8 @@ Resources:
                         "ProjectName" : "${ProjectName}",
                         "ContainerImageUrl" : "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}.ecr:#{BuildVariables.CODEBUILD_BUILD_NUMBER}",
                         "EnvironmentBucketName": "provision.${ProjectName}.s3",
-                        "EnvironmentBucketKey": "env/cloud_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.env"
+                        "EnvironmentBucketKey": "env/cloud_#{BuildVariables.CODEBUILD_BUILD_NUMBER}.env",
+                        "BuildNumber": "#{BuildVariables.CODEBUILD_BUILD_NUMBER}"
                       }
                   InputArtifacts:
                     - Name: OutputArtefact

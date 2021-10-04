@@ -292,8 +292,6 @@ Resources:
       - Key: Project
         Value: !Ref ProjectName 
 
-  
-
   PublishLambdaVersionRole:
     Type: AWS::IAM::Role
     Properties:

@@ -7,8 +7,35 @@ Parameters:
     Description: Name for the project (only lower case letters with '-')
     
 Resources:
+  PipelineKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'Key for ${ProjectName}'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName 
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: !Sub 'provision.${ProjectName}.key-policy'
+        Statement:
+          - Sid: Allow IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: kms:*
+            Resource: '*'
+         
+  PipelineKeyAlias:
+    Type: AWS::KMS::Alias
+    DependsOn : PipelineKey
+    Properties:
+      AliasName: !Sub 'alias/provision-${ProjectName}-kms-key'
+      TargetKeyId: !Ref PipelineKey
+      
   DeployRole:
     Type: AWS::IAM::Role
+    DependsOn : PipelineKey
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -92,14 +119,32 @@ Resources:
               - Effect: Allow
                 Action: edgelambda:*
                 Resource: '*'
+        - PolicyName: KMSKeyAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Effect: Allow
+              Action: 
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !GetAtt PipelineKey.Arn
       Tags:
         - Key: Project
           Value: !Ref ProjectName
   
   PipelineBucket:
     Type: AWS::S3::Bucket
+    DependsOn : PipelineKey
     Properties:
       BucketName: !Sub 'provision.${ProjectName}.s3'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !GetAtt PipelineKey.Arn
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -169,7 +214,31 @@ Resources:
                         }
                         else {
                           console.log(data)
-                          
+                          var encryptionParams = {
+                            Bucket: event.ResourceProperties.BucketName,
+                            ServerSideEncryptionConfiguration: {
+                              Rules: [
+                                {
+                                  ApplyServerSideEncryptionByDefault: {
+                                    SSEAlgorithm: 'aws:kms', 
+                                    KMSMasterKeyID: event.BucketKey
+                                  },
+                                  BucketKeyEnabled: true
+                                }
+                              ]
+                            }   
+                          }
+                          s3.putBucketEncryption(encryptionParams, function(err, data) {
+                              if (err) {
+                                  console.log(err, err.stack);
+                              }
+                              else {
+                                  console.log(data)
+                                  response.send(event, context, response.SUCCESS, {}, event.BucketName);
+                                  callback(null,'Bucket created!');
+                              }
+                          });
+
                           var publicAccessBlockParams = {
                             Bucket: event.ResourceProperties.BucketName,
                             PublicAccessBlockConfiguration: { 
@@ -233,6 +302,7 @@ Resources:
       ServiceToken: !GetAtt EdgeBucket.Arn
       BucketName: !Sub 'provision.${ProjectName}.e.s3'
       BucketRegion: us-east-1
+      BucketKey: !GetAtt PipelineKey.Arn
 
   PipelineECRRepository:
     Type: AWS::ECR::Repository
@@ -253,6 +323,7 @@ Resources:
     Type: AWS::IAM::Role
     DependsOn:
       - DeployRole
+      - PipelineKey
       - PipelineBucket
     Properties:
       AssumeRolePolicyDocument:
@@ -282,6 +353,18 @@ Resources:
               - Effect: Allow
                 Action: ecr:*
                 Resource: '*'
+        - PolicyName: KMSKeyAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              Effect: Allow
+              Action: 
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:ReEncrypt*
+                - kms:GenerateDataKey*
+                - kms:DescribeKey
+              Resource: !GetAtt PipelineKey.Arn
         - PolicyName: BucketAccess
           PolicyDocument:
             Version: '2012-10-17'
@@ -349,10 +432,16 @@ Resources:
           - ArtifactStore: 
               Location: !Sub provision.${ProjectName}.s3
               Type: S3
+              EncryptionKey:
+                Id: !GetAtt PipelineKey.Arn
+                Type: KMS
             Region: !Sub ${AWS::Region}
           - ArtifactStore: 
               Location: !Sub provision.${ProjectName}.e.s3
               Type: S3
+              EncryptionKey:
+                Id: !GetAtt PipelineKey.Arn
+                Type: KMS
             Region: us-east-1
         Name: !Sub provision.${ProjectName}.pipeline
         RoleArn: !GetAtt PipelineRole.Arn

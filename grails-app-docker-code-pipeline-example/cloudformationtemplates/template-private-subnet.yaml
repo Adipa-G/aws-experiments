@@ -623,9 +623,6 @@ Resources:
           TargetOriginId: LoadBalancerDNS
           ViewerProtocolPolicy: allow-all
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-          LambdaFunctionAssociations:
-          - EventType: viewer-request
-            LambdaFunctionARN: !GetAtt RedirectLambdaVersion.FunctionArn
         PriceClass: PriceClass_All
         ViewerCertificate:
           CloudFrontDefaultCertificate: 'true'

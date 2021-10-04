@@ -170,6 +170,12 @@ Resources:
               - Effect: Allow
                 Action: cloudfront:*
                 Resource: '*'
+              - Effect: Allow
+                Action: lambda:*
+                Resource: '*'
+              - Effect: Allow
+                Action: edgelambda:*
+                Resource: '*'
         - PolicyName: KMSKeyAccess
           PolicyDocument:
             Version: "2012-10-17"

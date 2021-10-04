@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A stack for deploying containerized applications in AWS Fargate.
+             This stack runs containers in a public VPC subnet, and includes a
+             public facing load balancer to register the services in.
+Parameters:
+  LoadBalancerDNSName:
+    Type: String
+    Default: not-set
+    Description: Domain name of the load balancer (without protocol or paths)
+  BuildNumber:
+    Type: String
+    Default: not-set
+    Description: Build number
+             
+Resources:
+  RedirectLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+                - 'edgelambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  PublishLambdaVersionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+      - PolicyName: PublishVersion
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: lambda:PublishVersion
+            Resource: '*'
+
+  HeaderRegexPatternSet:
+    Type: AWS::WAFv2::RegexPatternSet
+    Properties:
+      Name: HeaderVerifyRegex
+      Scope: REGIONAL
+      Description: Verify the header
+      RegularExpressionList:
+        - ^secret$
+
+  RedirectLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt RedirectLambdaFunctionRole.Arn
+      Runtime: nodejs14.x
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          'use strict';
+          const querystring = require('querystring');
+
+          exports.handler = (event, context, callback) => {
+              const request = event.Records[0].cf.request;
+
+              const headers = request.headers;
+              const params = querystring.parse(request.querystring);
+
+              if (params.x){
+                const redirectUrl = `http://${headers.host[0].value}${request.uri}/x`;
+                const response = {
+                    status: '302',
+                    statusDescription: 'Found',
+                    headers: {
+                        location: [{
+                            key: 'Location',
+                            value: redirectUrl,
+                        }],
+                    },
+                };
+                callback(null, response);
+              }
+              else{
+                callback(null, request);
+              }
+          };
+
+  PublishLambdaVersion:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs14.x
+      Role: !GetAtt PublishLambdaVersionRole.Arn
+      Code:
+        ZipFile: |
+          const {Lambda} = require('aws-sdk')
+          const {send, SUCCESS, FAILED} = require('cfn-response')
+          const lambda = new Lambda()
+          exports.handler = (event, context) => {
+            const {RequestType, ResourceProperties: {FunctionName}} = event
+            if (RequestType == 'Delete') return send(event, context, SUCCESS)
+            lambda.publishVersion({FunctionName}, (err, {FunctionArn}) => {
+              err
+                ? send(event, context, FAILED, err)
+                : send(event, context, SUCCESS, {FunctionArn})
+            })
+          }
+
+  RedirectLambdaVersion:
+    Type: Custom::LatestLambdaVersion
+    Properties:
+      ServiceToken: !GetAtt PublishLambdaVersion.Arn
+      FunctionName: !Ref RedirectLambdaFunction
+      Nonce: !Ref BuildNumber
+
+  CFDistribution:
+    Type: 'AWS::CloudFront::Distribution'
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Ref LoadBalancerDNSName
+            Id: LoadBalancerDNS
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+            OriginCustomHeaders:
+               - HeaderName: cf_key
+                 HeaderValue: secret
+        Enabled: 'true'
+        DefaultCacheBehavior:
+          TargetOriginId: LoadBalancerDNS
+          ViewerProtocolPolicy: allow-all
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          LambdaFunctionAssociations:
+          - EventType: viewer-request
+            LambdaFunctionARN: !GetAtt RedirectLambdaVersion.FunctionArn
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: 'true'
+        
+Outputs:
+  CFUrl:
+    Description: The url of the external load balancer
+    Value: !Join ['', ['http://', !GetAtt 'CFDistribution.DomainName', '/test-app-0.1/']]
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CFUrl' ] ]

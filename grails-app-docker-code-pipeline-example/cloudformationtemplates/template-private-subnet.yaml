@@ -19,10 +19,6 @@ Parameters:
     Type: String
     Default: not-set
     Description: S3 bucket key for the .env file for the application
-  BuildNumber:
-    Type: String
-    Default: not-set
-    Description: Build number
              
 Mappings:
   SubnetConfig:
@@ -292,43 +288,6 @@ Resources:
       - Key: Project
         Value: !Ref ProjectName 
 
-  RedirectLambdaFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - 'lambda.amazonaws.com'
-                - 'edgelambda.amazonaws.com'
-            Action:
-              - 'sts:AssumeRole'
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-
-  PublishLambdaVersionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-      - PolicyName: PublishVersion
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action: lambda:PublishVersion
-            Resource: '*'
-
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -549,83 +508,6 @@ Resources:
     Properties:
       WebACLArn: !GetAtt WebACL.Arn
       ResourceArn: !Ref LoadBalancer
-  
-  RedirectLambdaFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Role: !GetAtt RedirectLambdaFunctionRole.Arn
-      Runtime: nodejs10.x
-      Handler: index.handler
-      Code:
-        ZipFile: |
-          exports.handler = (event, ctx, cb) => {
-            const request = event.Records[0].cf.request;
-            const params = querystring.parse(request.querystring);
-
-            if (params.x && params.y && params.z) {
-              const response = { 
-                status : '302', 
-                statusDescription: 'Found', 
-                headers: {
-                  location: [
-                    key: 'Location',
-                    value: '/health/' + params.x + '/' + params.y  + '/' + params.z
-                  ]
-                }   
-            }
-            else {
-              callback(null, request);
-            }
-          }
-
-  PublishLambdaVersion:
-    Type: AWS::Lambda::Function
-    Properties:
-      Handler: index.handler
-      Runtime: nodejs10.x
-      Role: !GetAtt PublishLambdaVersionRole.Arn
-      Code:
-        ZipFile: |
-          const {Lambda} = require('aws-sdk')
-          const {send, SUCCESS, FAILED} = require('cfn-response')
-          const lambda = new Lambda()
-          exports.handler = (event, context) => {
-            const {RequestType, ResourceProperties: {FunctionName}} = event
-            if (RequestType == 'Delete') return send(event, context, SUCCESS)
-            lambda.publishVersion({FunctionName}, (err, {FunctionArn}) => {
-              err
-                ? send(event, context, FAILED, err)
-                : send(event, context, SUCCESS, {FunctionArn})
-            })
-          }
-
-  RedirectLambdaVersion:
-    Type: Custom::LatestLambdaVersion
-    Properties:
-      ServiceToken: !GetAtt PublishLambdaVersion.Arn
-      FunctionName: !Ref RedirectLambdaFunction
-      Nonce: !Ref BuildNumber
-
-  CFDistribution:
-    Type: 'AWS::CloudFront::Distribution'
-    Properties:
-      DistributionConfig:
-        Origins:
-          - DomainName: !GetAtt 'LoadBalancer.DNSName'
-            Id: LoadBalancerDNS
-            CustomOriginConfig:
-              OriginProtocolPolicy: http-only
-            OriginCustomHeaders:
-               - HeaderName: cf_key
-                 HeaderValue: secret
-        Enabled: 'true'
-        DefaultCacheBehavior:
-          TargetOriginId: LoadBalancerDNS
-          ViewerProtocolPolicy: allow-all
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-        PriceClass: PriceClass_All
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: 'true'
         
 Outputs:
   ALBUrl:
@@ -633,8 +515,3 @@ Outputs:
     Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ALBUrl' ] ]
-  CFUrl:
-    Description: The url of the external load balancer
-    Value: !Join ['', ['http://', !GetAtt 'CFDistribution.DomainName', '/test-app-0.1/']]
-    Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'CFUrl' ] ]

@@ -33,64 +33,6 @@ Resources:
       AliasName: !Sub 'alias/provision-${ProjectName}-kms-key'
       TargetKeyId: !Ref PipelineKey
       
-  PipelineBucket:
-    Type: AWS::S3::Bucket
-    DependsOn : PipelineKey
-    Properties:
-      BucketName: !Sub 'provision.${ProjectName}.s3'
-      BucketEncryption: 
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: 'aws:kms'
-              KMSMasterKeyID: !GetAtt PipelineKey.Arn
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      LifecycleConfiguration:
-        Rules:
-        - Id: Purge after 2 days of creation
-          ExpirationInDays: 2
-          Status: Enabled
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
-          
-  PipelineBucketPolicy: 
-    Type: AWS::S3::BucketPolicy
-    DependsOn : PipelineBucket
-    Properties: 
-      Bucket: !Ref PipelineBucket
-      PolicyDocument: 
-        Statement: 
-          - Sid: CodeBuildServicePermit
-            Effect: Allow
-            Principal:
-              Service: codebuild.amazonaws.com
-            Action: 's3:*'
-            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
-          - Sid: CodePipelineServicePermit
-            Effect: Allow
-            Principal:
-              Service: codepipeline.amazonaws.com
-            Action: 's3:*'
-            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
-          - Sid: AllowAccountAccess
-            Effect: Allow
-            Principal:
-              AWS: 
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: 's3:*'
-            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
-          - Sid: AllowAccountAccessObjects
-            Effect: Allow
-            Principal:
-              AWS: 
-              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
-            Action: 's3:*'
-            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3/*'
-  
   DeployRole:
     Type: AWS::IAM::Role
     DependsOn : PipelineKey
@@ -104,6 +46,7 @@ Resources:
                 - cloudformation.amazonaws.com
                 - cloudformation.amazonaws.com
                 - codepipeline.amazonaws.com
+                - lambda.amazonaws.com
             Action: sts:AssumeRole
           - Effect: Allow
             Principal:
@@ -192,6 +135,122 @@ Resources:
         - Key: Project
           Value: !Ref ProjectName
   
+  PipelineBucket:
+    Type: AWS::S3::Bucket
+    DependsOn : PipelineKey
+    Properties:
+      BucketName: !Sub 'provision.${ProjectName}.s3'
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !GetAtt PipelineKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+        - Id: Purge after 2 days of creation
+          ExpirationInDays: 2
+          Status: Enabled
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+          
+  PipelineBucketPolicy: 
+    Type: AWS::S3::BucketPolicy
+    DependsOn : PipelineBucket
+    Properties: 
+      Bucket: !Ref PipelineBucket
+      PolicyDocument: 
+        Statement: 
+          - Sid: CodeBuildServicePermit
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: CodePipelineServicePermit
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: AllowAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: 
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3'
+          - Sid: AllowAccountAccessObjects
+            Effect: Allow
+            Principal:
+              AWS: 
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 's3:*'
+            Resource: !Sub 'arn:aws:s3:::provision.${ProjectName}.s3/*'
+
+  EdgeBucket:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        ZipFile:
+          !Sub |
+            var aws = require('aws-sdk');
+            var response = require('cfn-response');
+            exports.handler = function(event, context, callback){
+                var s3 = new aws.S3({region: event.ResourceProperties.BucketRegion});
+                if (event.RequestType == 'Create' || event.RequestType == 'Update'){
+                    var bucketParams = {
+                        Bucket: event.ResourceProperties.BucketName,
+                    };
+                    s3.createBucket(bucketParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: event.ResourceProperties.BucketName,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
+                                }
+                            };
+                            s3.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) {
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, event.BucketName);
+                                    callback(null,'Bucket created!');
+                                }
+                            });
+                        }
+                    });
+                }
+                else if (event.RequestType == 'Delete'){
+                    console.log('Please delete the ' + event.PhysicalResourceId + ' bucket.')
+                    response.send(event, context, response.SUCCESS, {}, event.PhysicalResourceId);
+                    callback(null);
+                }
+            };
+      Handler: index.handler
+      Role: !GetAtt DeployRole.Arn
+      Runtime: nodejs14.x
+      Timeout: 30
+
+  TriggerEdgeBucket:
+    Type: Custom::LambdaTrig
+    Properties:
+      ServiceToken: !GetAtt EdgeBucket.Arn
+      BucketName: !Sub 'provision.${ProjectName}.e.s3'
+      BucketRegion: us-east-1
+
   PipelineECRRepository:
     Type: AWS::ECR::Repository
     Properties: 
@@ -311,16 +370,26 @@ Resources:
         - DeployRole
         - PipelineRole
         - CodeBuildProject
+        - EdgeBucket
       Properties:
         Tags:
           - Key: Project
             Value: !Ref ProjectName
-        ArtifactStore: 
-            Location: !Sub provision.${ProjectName}.s3
-            Type: S3
-            EncryptionKey:
-              Id: !GetAtt PipelineKey.Arn
-              Type: KMS
+        ArtifactStores: 
+          - ArtifactStore: 
+              Location: !Sub provision.${ProjectName}.s3
+              Type: S3
+              EncryptionKey:
+                Id: !GetAtt PipelineKey.Arn
+                Type: KMS
+            Region: !Sub ${AWS::Region}
+          - ArtifactStore: 
+              Location: !Sub provision.${ProjectName}.e.s3
+              Type: S3
+              EncryptionKey:
+                Id: !GetAtt PipelineKey.Arn
+                Type: KMS
+            Region: us-east-1
         Name: !Sub provision.${ProjectName}.pipeline
         RoleArn: !GetAtt PipelineRole.Arn
         Stages:
@@ -395,8 +464,47 @@ Resources:
                   RunOrder: 1
             - Name: Deploy
               Actions:
-                - Name: CreateChangeSet
+                - Name: CreateChangeSetForEdgeLambda
                   Region: us-east-1
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_REPLACE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-edge-lambda-stack'
+                    ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                    TemplatePath: OutputArtefact::grails-app-docker-code-pipeline-example/cloudformationtemplates/template-edge-lambda.yaml
+                    Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                    ParameterOverrides: !Sub |
+                      { 
+                        "ProjectName" : "${ProjectName}",
+                        "BuildNumber": "#{BuildVariables.CODEBUILD_BUILD_NUMBER}"
+                      }
+                  InputArtifacts:
+                    - Name: OutputArtefact
+                  RunOrder: 1
+                - Name: ExecuteChangeSetForEdgeLambda
+                  Region: us-east-1
+                  Namespace: EdgeDeploy
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_EXECUTE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-edge-lambda-stack'
+                    ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                  OutputArtifacts:
+                    - Name: !Sub '${ProjectName}Edge'
+                  RunOrder: 2
+                - Name: CreateChangeSetForECS
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                   ActionTypeId:
                     Category: Deploy
@@ -421,9 +529,8 @@ Resources:
                   InputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1
-                - Name: ExecuteChangeSet
-                  Region: us-east-1
-                  Namespace: APIDeploy
+                - Name: ExecuteChangeSetForECS
+                  Namespace: ECSDeploy
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                   ActionTypeId:
                     Category: Deploy
@@ -436,5 +543,5 @@ Resources:
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
                   OutputArtifacts:
-                    - Name: !Sub '${ProjectName}ChangeSet'
+                    - Name: !Sub '${ProjectName}ECS'
                   RunOrder: 2

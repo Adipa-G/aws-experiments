@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A stack for deploying edge lambda function.
+Parameters:
+  ProjectName:
+    Type: String
+    Default: grails-app
+    Description: Name for the project (lower case)
+  BuildNumber:
+    Type: String
+    Default: not-set
+    Description: Build number
+             
+Resources:
+  RedirectLambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - 'lambda.amazonaws.com'
+                - 'edgelambda.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  RedirectLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt RedirectLambdaFunctionRole.Arn
+      Runtime: nodejs14.x
+      Handler: index.handler
+      Code:
+        ZipFile: |
+          exports.handler = (event, ctx, cb) => {
+            const request = event.Records[0].cf.request;
+            const params = querystring.parse(request.querystring);
+
+            if (params.x && params.y && params.z) {
+              const response = { 
+                status : '302', 
+                statusDescription: 'Found', 
+                headers: {
+                  location: [
+                    key: 'Location',
+                    value: '/health/' + params.x + '/' + params.y  + '/' + params.z
+                  ]
+                }   
+            }
+            else {
+              callback(null, request);
+            }
+          }
+        
+Outputs:
+  LambdaArn:
+    Name: Edge Lambda ARN
+    Export:
+      Value: !GetAtt RedirectLambdaFunctionRole.Arn
+  

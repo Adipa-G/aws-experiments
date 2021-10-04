@@ -482,7 +482,7 @@ Resources:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
       MinCapacity: 1
-      MaxCapacity: 10
+      MaxCapacity: 2
       ResourceId: !Join ['/', [service, !Ref Cluster, !GetAtt Service.Name]]
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs

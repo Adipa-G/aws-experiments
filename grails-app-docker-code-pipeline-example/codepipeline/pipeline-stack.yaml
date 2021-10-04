@@ -213,75 +213,23 @@ Resources:
                             response.send(event, context, response.FAILED, err)
                         }
                         else {
-                          console.log(data)
-                          var encryptionParams = {
-                            Bucket: event.ResourceProperties.BucketName,
-                            ServerSideEncryptionConfiguration: {
-                              Rules: [
-                                {
-                                  ApplyServerSideEncryptionByDefault: {
-                                    SSEAlgorithm: 'aws:kms', 
-                                    KMSMasterKeyID: event.BucketKey
-                                  },
-                                  BucketKeyEnabled: true
+                            console.log(data)
+                            var versioningParams = {
+                                Bucket: event.ResourceProperties.BucketName,
+                                VersioningConfiguration: {
+                                    Status: 'Enabled'
                                 }
-                              ]
-                            }   
-                          }
-                          s3.putBucketEncryption(encryptionParams, function(err, data) {
-                              if (err) {
-                                  console.log(err, err.stack);
-                              }
-                              else {
-                                  console.log(data)
-                                  response.send(event, context, response.SUCCESS, {}, event.BucketName);
-                                  callback(null,'Bucket created!');
-                              }
-                          });
-
-                          var publicAccessBlockParams = {
-                            Bucket: event.ResourceProperties.BucketName,
-                            PublicAccessBlockConfiguration: { 
-                              BlockPublicAcls: true,
-                              BlockPublicPolicy: true,
-                              IgnorePublicAcls: true,
-                              RestrictPublicBuckets: true
-                            }
-                          };
-                          s3.putPublicAccessBlock(publicAccessBlockParams, function(err, data) {
-                              if (err) {
-                                  console.log(err, err.stack);
-                              }
-                              else {
-                                  console.log(data)
-                                  response.send(event, context, response.SUCCESS, {}, event.BucketName);
-                                  callback(null,'Bucket created!');
-                              }
-                          });
-
-                          var bucketLifecycleParams = {
-                            Bucket: event.ResourceProperties.BucketName,
-                            LifecycleConfiguration: {
-                              Rules: [{
-                                      Expiration: {
-                                          Days: 2
-                                      },
-                                      ID: "Purge after 2 days of creation",
-                                      Status: "Enabled"
-                                  }
-                              ]
-                            }
-                          };
-                          s3.putBucketLifecycleConfiguration(bucketLifecycleParams, function(err, data) {
-                            if (err) {
-                                  console.log(err, err.stack);
-                              }
-                              else {
-                                  console.log(data)
-                                  response.send(event, context, response.SUCCESS, {}, event.BucketName);
-                                  callback(null,'Bucket created!');
-                              }
-                          });
+                            };
+                            s3.putBucketVersioning(versioningParams, function(err, data) {
+                                if (err) {
+                                    console.log(err, err.stack);
+                                }
+                                else {
+                                    console.log(data)
+                                    response.send(event, context, response.SUCCESS, {}, event.BucketName);
+                                    callback(null,'Bucket created!');
+                                }
+                            });
                         }
                     });
                 }
@@ -302,7 +250,6 @@ Resources:
       ServiceToken: !GetAtt EdgeBucket.Arn
       BucketName: !Sub 'provision.${ProjectName}.e.s3'
       BucketRegion: us-east-1
-      BucketKey: !GetAtt PipelineKey.Arn
 
   PipelineECRRepository:
     Type: AWS::ECR::Repository

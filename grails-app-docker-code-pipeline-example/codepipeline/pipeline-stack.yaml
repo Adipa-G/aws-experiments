@@ -396,7 +396,6 @@ Resources:
             - Name: Deploy
               Actions:
                 - Name: CreateChangeSet
-                  Region: us-east-1
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                   ActionTypeId:
                     Category: Deploy
@@ -422,7 +421,6 @@ Resources:
                     - Name: OutputArtefact
                   RunOrder: 1
                 - Name: ExecuteChangeSet
-                  Region: us-east-1
                   Namespace: APIDeploy
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                   ActionTypeId:

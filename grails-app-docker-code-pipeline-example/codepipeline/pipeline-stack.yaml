@@ -639,7 +639,7 @@ Resources:
                     - Name: OutputArtefact
                   RunOrder: 1
                 - Name: ExecuteChangeSet
-                  Namespace: APIDeploy
+                  Namespace: CloudFrontDeploy
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
                   Region: us-east-1
                   ActionTypeId:

@@ -571,7 +571,7 @@ Resources:
                   OutputArtifacts:
                     - Name: OutputArtefact
                   RunOrder: 1
-            - Name: Deploy
+            - Name: DeployApp
               Actions:
                 - Name: CreateChangeSet
                   RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
@@ -611,5 +611,47 @@ Resources:
                     StackName: !Sub '${ProjectName}-stack'
                     ChangeSetName: !Sub '${ProjectName}-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
                   OutputArtifacts:
-                    - Name: !Sub '${ProjectName}ChangeSet'
+                    - Name: !Sub '${ProjectName}-ecs-ChangeSet'
+                  RunOrder: 2
+            - Name: DeployCloudFront
+              Actions:
+                - Name: CreateChangeSet
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  Region: us-east-1
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_REPLACE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-cloudfront-stack'
+                    ChangeSetName: !Sub '${ProjectName}-cloudfront-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                    TemplatePath: OutputArtefact::grails-app-docker-code-pipeline-example/cloudformationtemplates/template-cloud-front.yaml
+                    Capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+                    ParameterOverrides: !Sub |
+                      { 
+                        "AppStackName" : "${ProjectName}-stack",
+                        "BuildNumber" : "{BuildVariables.CODEBUILD_BUILD_NUMBER}"
+                      }
+                  InputArtifacts:
+                    - Name: OutputArtefact
+                  RunOrder: 1
+                - Name: ExecuteChangeSet
+                  Namespace: APIDeploy
+                  RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                  Region: us-east-1
+                  ActionTypeId:
+                    Category: Deploy
+                    Owner: AWS
+                    Provider: CloudFormation
+                    Version: '1'
+                  Configuration:
+                    ActionMode: CHANGE_SET_EXECUTE
+                    RoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/deploy.${ProjectName}.role
+                    StackName: !Sub '${ProjectName}-cloudfront-stack'
+                    ChangeSetName: !Sub '${ProjectName}-cloudfront-change-set-#{BuildVariables.CODEBUILD_BUILD_NUMBER}'
+                  OutputArtifacts:
+                    - Name: !Sub '${ProjectName}-cloudfront-ChangeSet'
                   RunOrder: 2

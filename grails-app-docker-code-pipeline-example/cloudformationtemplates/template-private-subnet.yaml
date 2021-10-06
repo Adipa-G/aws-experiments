@@ -510,6 +510,11 @@ Resources:
       ResourceArn: !Ref LoadBalancer
         
 Outputs:
+  ALBDNS:
+    Description: The DNS of the external load balancer
+    Value: !GetAtt 'LoadBalancer.DNSName'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ALBDNS' ] ]
   ALBUrl:
     Description: The url of the external load balancer
     Value: !Join ['', ['http://', !GetAtt 'LoadBalancer.DNSName', '/test-app-0.1/']]

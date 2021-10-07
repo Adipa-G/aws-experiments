@@ -11,7 +11,7 @@ Parameters:
     Type: String
     Default: not-set
     Description: Container image url
-  EnvironmentBucketName:
+  BucketName:
     Type: String
     Default: not-set
     Description: S3 bucket name where the .env files live
@@ -394,7 +394,7 @@ Resources:
             - Name: "APP_NAME"
               Value: "app"
           EnvironmentFiles:
-            - Value: !Sub "arn:aws:s3:::${EnvironmentBucketName}/${EnvironmentBucketKey}"
+            - Value: !Sub "arn:aws:s3:::${BucketName}/${EnvironmentBucketKey}"
               Type: "s3"
           PortMappings:
             - ContainerPort: 80

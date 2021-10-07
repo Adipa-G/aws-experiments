@@ -11,7 +11,15 @@ Parameters:
     Type: String
     Default: not-set
     Description: Build number
-             
+  BucketName:
+    Type: String
+    Default: not-set
+    Description: S3 bucket name where the .env files live
+  CloudFrontRulesBucketKey:
+    Type: String
+    Default: not-set
+    Description: S3 bucket key for the .env file for the application
+  
 Resources:
   RedirectLambdaFunctionRole:
     Type: AWS::IAM::Role
@@ -66,34 +74,8 @@ Resources:
       Runtime: nodejs14.x
       Handler: index.handler
       Code:
-        ZipFile: |
-          'use strict';
-          const querystring = require('querystring');
-
-          exports.handler = (event, context, callback) => {
-              const request = event.Records[0].cf.request;
-
-              const headers = request.headers;
-              const params = querystring.parse(request.querystring);
-
-              if (params.x){
-                const redirectUrl = `http://${headers.host[0].value}${request.uri}/${params.x}`;
-                const response = {
-                    status: '302',
-                    statusDescription: 'Found',
-                    headers: {
-                        location: [{
-                            key: 'Location',
-                            value: redirectUrl,
-                        }],
-                    },
-                };
-                callback(null, response);
-              }
-              else{
-                callback(null, request);
-              }
-          };
+        S3Bucket: !Ref BucketName
+        S3Key: !Ref CloudFrontRulesBucketKey
 
   PublishLambdaVersion:
     Type: AWS::Lambda::Function

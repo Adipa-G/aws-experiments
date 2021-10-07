@@ -13,6 +13,7 @@ phases:
       - echo ${CODEBUILD_SRC_DIR}
       - echo ${IMAGE_REPO_NAME}
       - echo ${ENV_OUTPUT_BUCKET}
+      - echo ${CF_RULES_OUTPUT_BUCKET}
       
       - apt-get upgrade
       - apt-get update
@@ -26,6 +27,9 @@ phases:
       - docker tag ${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER} ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_BUILD_NUMBER}
 
       - aws s3 cp ./grails-app-docker-code-pipeline-example/cloud.env s3://${ENV_OUTPUT_BUCKET}/env/cloud_${CODEBUILD_BUILD_NUMBER}.env
+
+      - zip ./cloudfrontrules.zip ./grails-app-docker-code-pipeline-example/cloudfrontrules/index.js
+      - aws s3 cp ./cloudfrontrules.zip s3://${CF_RULES_OUTPUT_BUCKET}/cloudfront/rules_${CODEBUILD_BUILD_NUMBER}.zip
 
       - app_id=$(docker create app-build:latest)
       - docker cp $app_id:/home/app/target/test-reports/TESTS-TestSuites.xml ./test-results.xml

@@ -28,7 +28,7 @@ phases:
 
       - aws s3 cp ./grails-app-docker-code-pipeline-example/cloud.env s3://${ENV_OUTPUT_BUCKET}/env/cloud_${CODEBUILD_BUILD_NUMBER}.env
 
-      - zip ./cloudfrontrules.zip ./grails-app-docker-code-pipeline-example/cloudfrontrules/index.js
+      - zip --junk-paths ./cloudfrontrules.zip ./grails-app-docker-code-pipeline-example/cloudfrontrules/index.js
       - aws s3 cp ./cloudfrontrules.zip s3://${CF_RULES_OUTPUT_BUCKET}/cloudfront/rules_${CODEBUILD_BUILD_NUMBER}.zip
 
       - app_id=$(docker create app-build:latest)

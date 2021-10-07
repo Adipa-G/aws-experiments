@@ -3,10 +3,10 @@ Description: A stack for deploying containerized applications in AWS Fargate.
              This stack runs containers in a public VPC subnet, and includes a
              public facing load balancer to register the services in.
 Parameters:
-  AppStackName:
+  ALBDNS:
     Type: String
     Default: not-set
-    Description: Stack name of the ECS cluster. This is used to extract ALB DNS name to provision the cloudfront
+    Description: DNS name of the application load balancer
   BuildNumber:
     Type: String
     Default: not-set
@@ -128,9 +128,7 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: 
-              Fn::ImportValue: 
-                !Sub "${AppStackName}:ALBDNS"
+          - DomainName: !Ref ALBDNS
             Id: LoadBalancerDNS
             CustomOriginConfig:
               OriginProtocolPolicy: http-only

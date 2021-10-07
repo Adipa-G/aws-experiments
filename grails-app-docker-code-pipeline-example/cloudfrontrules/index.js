@@ -8,7 +8,7 @@ exports.handler = (event, context, callback) => {
   const params = querystring.parse(request.querystring);
 
   if (params.x){
-	const redirectUrl = `http://${headers.host[0].value}${request.uri}/${params.x}`;
+	const redirectUrl = 'http://' + headers.host[0].value + request.uri + params.x;
 	const response = {
 		status: '302',
 		statusDescription: 'Found',

@@ -1,0 +1,319 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: test stack
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: test-stack
+    Description: Name for the project (only lower case letters with '-')
+
+Resources:
+  PipelineKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "Key for ${ProjectName}"
+      MultiRegion: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: !Sub "provision.${ProjectName}.key-policy"
+        Statement:
+          - Sid: Allow IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: kms:*
+            Resource: "*"
+
+  TestStackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: sts:AssumeRole
+      RoleName: !Sub "${ProjectName}.role"
+      Policies:
+        - PolicyName: InfrastructureProvisioning
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: cloudwatch:*
+                Resource: "*"
+              - Effect: Allow
+                Action: ec2:*
+                Resource: "*"
+              - Effect: Allow
+                Action: s3:*
+                Resource: "*"
+              - Effect: Allow
+                Action: codedeploy:*
+                Resource: "*"
+              - Effect: Allow
+                Action: xray:*
+                Resource: "*"
+              - Effect: Allow
+                Action: iam:*
+                Resource: "*"
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource: "*"
+              - Effect: Allow
+                Action: kms:*
+                Resource: "*"
+              - Effect: Allow
+                Action: logs:*
+                Resource: "*"
+              - Effect: Allow
+                Action: secretsmanager:*
+                Resource: "*"
+              - Effect: Allow
+                Action: lambda:*
+                Resource: "*"
+              - Effect: Allow
+                Action: edgelambda:*
+                Resource: "*"
+
+  ReplicaKey:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          var aws = require('aws-sdk');
+          var response = require('cfn-response');
+          exports.handler = function (event, context, callback) {
+            console.log(event)
+
+            var kms = new aws.KMS();
+            if (event.RequestType == 'Create' || event.RequestType == 'Update') {
+              var createParams = {
+                KeyId: event.ResourceProperties.SrcKeyId,
+                ReplicaRegion: event.ResourceProperties.DestKeyRegion,
+              };
+              kms.replicateKey(createParams, function (err, data) {
+                if (err) {
+                  console.log(err, err.stack)
+                  response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                  callback(new Error('Unable to setup replica'));
+                } else {
+                  var responseParams = {
+                    Arn: data.ReplicaKeyMetadata.Arn,
+                    KeyId: data.ReplicaKeyMetadata.SrcKeyId
+                  }
+                  response.send(event, context, response.SUCCESS, responseParams, event.PhysicalResourceId);
+                  callback(null);
+                }
+              });
+            } else if (event.RequestType == 'Delete') {
+              console.log('dest key ' + event.ResourceProperties.SrcKeyId.replace(event.ResourceProperties.SrcKeyRegion, event.ResourceProperties.DestKeyRegion));
+              var params = {
+                KeyId: event.ResourceProperties.SrcKeyId.replace(event.ResourceProperties.SrcKeyRegion, event.ResourceProperties.DestKeyRegion),
+                PendingWindowInDays: 7
+              };
+
+              kms.scheduleKeyDeletion(params, function(err, data) {
+                if (err) {
+                  console.log(err, err.stack)
+                  response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                  callback(new Error('Unable to delete replica'));
+                } else {
+                  response.send(event, context, response.SUCCESS, data, event.PhysicalResourceId);
+                  callback(null);
+                }  
+              });
+            }
+          };
+      Handler: index.handler
+      Role: !GetAtt TestStackRole.Arn
+      Runtime: nodejs14.x
+      Timeout: 5  
+
+  TriggerReplicaKey:
+    Type: Custom::LambdaTrig
+    Properties:
+      ServiceToken: !GetAtt ReplicaKey.Arn
+      SrcKeyId: !GetAtt PipelineKey.Arn
+      SrcKeyRegion: !Ref AWS::Region
+      DestKeyRegion: us-east-1
+
+  EdgeBucket:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        ZipFile: !Sub |
+          var aws = require('aws-sdk');
+          var response = require('cfn-response');
+          exports.handler = function (event, context, callback) {
+            console.log(event)
+
+            var s3 = new aws.S3({
+              region: event.ResourceProperties.BucketRegion
+            });
+            var bucketName = event.ResourceProperties.BucketName;
+
+            if (event.RequestType == 'Create' || event.RequestType == 'Update') {
+              var bucketParams = {
+                Bucket: bucketName,
+              };
+              s3.createBucket(bucketParams, function (err, createData) {
+                if (err) {
+                  console.log(err, err.stack)
+                  response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                } else {
+                  var encryptionParams = {
+                    Bucket: bucketName,
+                    ServerSideEncryptionConfiguration: {
+                      Rules: [{
+                          ApplyServerSideEncryptionByDefault: {
+                            SSEAlgorithm: 'aws:kms',
+                            KMSMasterKeyID: event.BucketKey
+                          },
+                          BucketKeyEnabled: true
+                        }
+                      ]
+                    }
+                  }
+                  s3.putBucketEncryption(encryptionParams, function (err, data) {
+                    if (err) {
+                        console.log(err, err.stack);
+                        response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                        callback(new Error('Unable to setup encryption'));
+                    } else {
+                      var publicAccessBlockParams = {
+                        Bucket: bucketName,
+                        PublicAccessBlockConfiguration: {
+                          BlockPublicAcls: true,
+                          BlockPublicPolicy: true,
+                          IgnorePublicAcls: true,
+                          RestrictPublicBuckets: true
+                        }
+                      };
+                        s3.putPublicAccessBlock(publicAccessBlockParams, function (err, data) {
+                        if (err) {
+                          console.log(err, err.stack);
+                          response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                          callback(new Error('Unable to setup lifecycle'));
+                        } else {
+                          var bucketLifecycleParams = {
+                            Bucket: bucketName,
+                            LifecycleConfiguration: {
+                              Rules: [{
+                                  Expiration: {
+                                    Days: 2
+                                  },
+                                  ID: "AutoPurgeAfter2DaysOfCreation",
+                                  Prefix: "",
+                                  Status: "Enabled"
+                                }
+                              ]
+                            }
+                          };
+                          s3.putBucketLifecycleConfiguration(bucketLifecycleParams, function (err, data) {
+                            if (err) {
+                              console.log(err, err.stack);
+                              response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                              callback(new Error('Unable to setup lifecycle'));
+                            } else {
+                              var bucketPolicyParams = {
+                                Bucket: bucketName,
+                                Policy: event.ResourceProperties.Policy
+                              };
+                              s3.putBucketPolicy(bucketPolicyParams, function (err, data) {
+                                if (err) {
+                                  console.log(err, err.stack);
+                                  response.send(event, context, response.FAILED, err, event.PhysicalResourceId)
+                                  callback(new Error('Unable to setup policy'));
+                                } else {
+                                  response.send(event, context, response.SUCCESS, createData, event.PhysicalResourceId);
+                                  callback(null);
+                                }
+                              });
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+            } else if (event.RequestType == 'Delete') {
+              var deleteParams = {
+                  Bucket: bucketName,
+              };
+
+              s3.deleteBucket(deleteParams, function (err, data) {
+                if (err) {
+                  console.log(err, err.stack);
+                  response.send(event, context, response.FAILED, {}, event.PhysicalResourceId);
+                  callback(new Error('Unable to delete bucket'));
+                } else {
+                  console.log(data)
+                  response.send(event, context, response.SUCCESS, {}, event.PhysicalResourceId);
+                  callback(null);
+                }
+              });
+            }
+          };
+      Handler: index.handler
+      Role: !GetAtt TestStackRole.Arn
+      Runtime: nodejs14.x
+      Timeout: 5
+
+  TriggerEdgeBucket:
+    Type: Custom::LambdaTrig
+    Properties:
+      ServiceToken: !GetAtt EdgeBucket.Arn
+      BucketName: !Sub "${ProjectName}.s3"
+      BucketRegion: us-east-1
+      BucketKey: !GetAtt TriggerReplicaKey.Arn
+      Policy: !Sub |
+        {
+          "Version": "2012-10-17", 
+          "Statement": [{ 
+            "Sid": "CodeBuildServicePermit",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "codebuild.amazonaws.com"
+            }, 
+            "Action": "s3:*", 
+            "Resource": "arn:aws:s3:::${ProjectName}.s3" 
+          },{ 
+            "Sid": "CodePipelineServicePermit",
+            "Effect": "Allow",
+            "Principal": {
+              "Service": "codepipeline.amazonaws.com"
+            }, 
+            "Action": "s3:*", 
+            "Resource": "arn:aws:s3:::${ProjectName}.s3" 
+          },{ 
+            "Sid": "AllowAccountAccess",
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::${AWS::AccountId}:root"
+            }, 
+            "Action": "s3:*", 
+            "Resource": "arn:aws:s3:::${ProjectName}.s3" 
+          },{ 
+            "Sid": "AllowAccountAccessObjects",
+            "Effect": "Allow",
+            "Principal": {
+              "AWS": "arn:aws:iam::${AWS::AccountId}:root"
+            }, 
+            "Action": "s3:*", 
+            "Resource": "arn:aws:s3:::${ProjectName}.s3/*" 
+          }]
+        }

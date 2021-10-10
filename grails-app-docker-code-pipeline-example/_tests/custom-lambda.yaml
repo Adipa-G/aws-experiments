@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: test stack
+
+Resources:
+  TestStackOneRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - cloudformation.amazonaws.com
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: sts:AssumeRole
+      RoleName: !Sub 'test.stackone.role'
+      Policies:
+        - PolicyName: InfrastructureProvisioning
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: cloudwatch:*
+                Resource: '*'
+              - Effect: Allow
+                Action: ec2:*
+                Resource: '*'
+              - Effect: Allow
+                Action: ecs:*
+                Resource: '*'
+              - Effect: Allow
+                Action: s3:*
+                Resource: '*'
+              - Effect: Allow
+                Action: codedeploy:*
+                Resource: '*'
+              - Effect: Allow
+                Action: xray:*
+                Resource: '*'
+              - Effect: Allow
+                Action: iam:*
+                Resource: '*'
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource: '*'
+              - Effect: Allow
+                Action: kms:*
+                Resource: '*'
+              - Effect: Allow
+                Action: logs:*
+                Resource: '*'
+              - Effect: Allow
+                Action: elasticloadbalancing:*
+                Resource: '*'
+              - Effect: Allow
+                Action: secretsmanager:*
+                Resource: '*'
+              - Effect: Allow
+                Action: codepipeline:*
+                Resource: '*'
+              - Effect: Allow
+                Action: codebuild:*
+                Resource: '*'
+              - Effect: Allow
+                Action: ecr:*
+                Resource: '*'
+              - Effect: Allow
+                Action: cloudfront:*
+                Resource: '*'
+              - Effect: Allow
+                Action: lambda:*
+                Resource: '*'
+              - Effect: Allow
+                Action: edgelambda:*
+                Resource: '*'
+
+  EdgeFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        ZipFile:
+          !Sub |
+            var aws = require('aws-sdk');
+            var response = require('cfn-response');
+            exports.handler = function(event, context, callback){
+                var lambda = new aws.Lambda({apiVersion: '2015-03-31', region: event.ResourceProperties.FunctionRegion});
+                if (event.RequestType == 'Create' || event.RequestType == 'Update'){
+                    var createParams = {
+                      Code: { 
+                        ImageUri: event.ResourceProperties.ImageUri
+                      },
+                      FunctionName: event.ResourceProperties.FunctionName, 
+                      Publish: true,
+                      Role: event.ResourceProperties.Role,
+                      PackageType: 'Image'
+                    };
+                    lambda.createFunction(createParams, function(err, data) {
+                        if (err){
+                            console.log(err, err.stack)
+                            response.send(event, context, response.FAILED, err)
+                        }
+                        else {
+                            console.log(data)
+                        }
+                    });
+                }
+                else if (event.RequestType == 'Delete'){
+                    console.log('Please delete the ' + event.PhysicalResourceId + ' function.')
+                    response.send(event, context, response.SUCCESS, {}, event.PhysicalResourceId);
+                    callback(null);
+                }
+            };
+      Handler: index.handler
+      Role: !GetAtt TestStackOneRole.Arn
+      Runtime: nodejs14.x
+      Timeout: 30
